@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """
-Collect all spec and feature keys from complete_products.json.
+Analyze all spec and feature keys from product data.
 Output: key_analysis.json with occurrence counts and sample values.
 """
 
 import json
 from collections import defaultdict
 from pathlib import Path
+from typing import Dict
+
+from .config import DEFAULT_INPUT_FILE, DEFAULT_KEY_ANALYSIS_FILE
 
 
-def collect_keys(products_file: str) -> dict:
+def collect_keys(products_file: str) -> Dict:
     """Collect all spec/feature keys with counts and samples."""
     with open(products_file, 'r') as f:
         data = json.load(f)
@@ -40,8 +43,9 @@ def collect_keys(products_file: str) -> dict:
 
 
 def main():
-    input_file = "output/complete_products.json"
-    output_file = "output/key_analysis.json"
+    """Main entry point for key analysis."""
+    input_file = DEFAULT_INPUT_FILE
+    output_file = DEFAULT_KEY_ANALYSIS_FILE
 
     print(f"Analyzing keys from {input_file}...")
     analysis = collect_keys(input_file)

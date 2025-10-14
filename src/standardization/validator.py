@@ -9,9 +9,12 @@ Validate standardized_products.json to ensure:
 import json
 import re
 from collections import Counter, defaultdict
+from typing import Dict, List
+
+from .config import DEFAULT_OUTPUT_FILE, COMMON_UNITS
 
 
-def check_units_in_values(value: str, common_units: list) -> list:
+def check_units_in_values(value: str, common_units: List[str]) -> List[str]:
     """
     Check if value contains any common units (with digits).
     Only flags units that have a digit preceding them to avoid false positives like "A to G".
@@ -33,11 +36,9 @@ def normalize_key(key: str) -> str:
     return key.lower().replace('_', '').replace('-', '').replace(' ', '')
 
 
-def validate_product(product: dict, product_idx: int) -> dict:
+def validate_product(product: Dict, product_idx: int) -> Dict:
     """Validate a single product, return issues found."""
     issues = defaultdict(list)
-
-    common_units = ['cm', 'mm', 'kg', 'g', 'rpm', 'kwh', 'watt', 'db', 'mins', 'hours']
 
     # Check specs
     specs = product.get('specs', {})
@@ -45,7 +46,7 @@ def validate_product(product: dict, product_idx: int) -> dict:
 
     for key, value in specs.items():
         # Check for units in values
-        units_found = check_units_in_values(value, common_units)
+        units_found = check_units_in_values(value, COMMON_UNITS)
         if units_found:
             issues['units_in_values'].append({
                 'product_idx': product_idx,
@@ -70,7 +71,7 @@ def validate_product(product: dict, product_idx: int) -> dict:
     # Check features
     features = product.get('features', {})
     for key, value in features.items():
-        units_found = check_units_in_values(value, common_units)
+        units_found = check_units_in_values(value, COMMON_UNITS)
         if units_found:
             issues['units_in_features'].append({
                 'product_idx': product_idx,
@@ -83,9 +84,13 @@ def validate_product(product: dict, product_idx: int) -> dict:
     return issues
 
 
-def main():
-    input_file = "output/standardized_products.json"
+def validate_standardization(input_file: str) -> Dict:
+    """
+    Validate standardized products file.
 
+    Returns:
+        Dictionary with validation results and statistics.
+    """
     print(f"Validating {input_file}...")
 
     with open(input_file, 'r') as f:
@@ -104,15 +109,31 @@ def main():
         all_spec_keys.extend(product.get('specs', {}).keys())
         all_feature_keys.extend(product.get('features', {}).keys())
 
-    # Print validation report
+    # Calculate statistics
+    spec_key_counts = Counter(all_spec_keys)
+    feature_key_counts = Counter(all_feature_keys)
+    total_products = len(data['products'])
+
+    return {
+        'issues': dict(all_issues),
+        'total_products': total_products,
+        'spec_key_counts': spec_key_counts,
+        'feature_key_counts': feature_key_counts,
+        'passed': not any(all_issues.values())
+    }
+
+
+def print_validation_report(results: Dict):
+    """Print formatted validation report."""
     print("\n" + "="*60)
     print("VALIDATION REPORT")
     print("="*60)
 
-    if not any(all_issues.values()):
+    if results['passed']:
         print("✓ All validations passed!")
     else:
-        for issue_type, issue_list in all_issues.items():
+        issues = results['issues']
+        for issue_type, issue_list in issues.items():
             print(f"\n✗ {issue_type.replace('_', ' ').upper()}: {len(issue_list)} issues")
             for issue in issue_list[:5]:  # Show first 5
                 print(f"  {issue}")
@@ -124,10 +145,9 @@ def main():
     print("KEY CONSISTENCY")
     print("="*60)
 
-    spec_key_counts = Counter(all_spec_keys)
-    feature_key_counts = Counter(all_feature_keys)
-
-    total_products = len(data['products'])
+    spec_key_counts = results['spec_key_counts']
+    feature_key_counts = results['feature_key_counts']
+    total_products = results['total_products']
 
     print(f"\nSpec keys present in all products: {sum(1 for c in spec_key_counts.values() if c == total_products)}/{len(spec_key_counts)}")
     print(f"Feature keys present in all products: {sum(1 for c in feature_key_counts.values() if c == total_products)}/{len(feature_key_counts)}")
@@ -139,6 +159,13 @@ def main():
             print(f"  {key}: {count}/{total_products} ({count*100//total_products}%)")
 
     print("\n" + "="*60)
+
+
+def main():
+    """Main entry point for validation."""
+    input_file = DEFAULT_OUTPUT_FILE
+    results = validate_standardization(input_file)
+    print_validation_report(results)
 
 
 if __name__ == "__main__":

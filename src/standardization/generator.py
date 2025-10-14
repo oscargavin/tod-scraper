@@ -6,10 +6,13 @@ Use Gemini 2.5 Flash to analyze key_analysis.json and generate unification_map.j
 import json
 import os
 from pathlib import Path
+from typing import Dict
 import google.generativeai as genai
 
+from .config import DEFAULT_KEY_ANALYSIS_FILE, DEFAULT_UNIFICATION_MAP_FILE
 
-def create_analysis_prompt(analysis: dict) -> str:
+
+def create_analysis_prompt(analysis: Dict) -> str:
     """Create prompt for Gemini to analyze keys and generate unification map."""
 
     specs_summary = []
@@ -65,7 +68,7 @@ Return ONLY valid JSON, nothing else."""
     return prompt
 
 
-def generate_unification_map(analysis_file: str, output_file: str) -> dict:
+def generate_unification_map(analysis_file: str, output_file: str) -> Dict:
     """Call Gemini API to generate unification map."""
 
     # Load API key
@@ -108,11 +111,12 @@ def generate_unification_map(analysis_file: str, output_file: str) -> dict:
 
 
 def main():
+    """Main entry point for map generation."""
     from dotenv import load_dotenv
     load_dotenv()
 
-    analysis_file = "output/key_analysis.json"
-    output_file = "output/unification_map.json"
+    analysis_file = DEFAULT_KEY_ANALYSIS_FILE
+    output_file = DEFAULT_UNIFICATION_MAP_FILE
 
     unification_map = generate_unification_map(analysis_file, output_file)
 

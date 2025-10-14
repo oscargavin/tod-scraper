@@ -9,84 +9,13 @@ import copy
 from pathlib import Path
 from typing import Dict, List, Any, Tuple, Optional
 
-
-# Dynamic unit detection patterns
-# Each pattern includes: suffix for the new key, regex pattern, and optional conversion function
-UNIT_PATTERNS = {
-    'cm': {
-        'suffix': '_cm',
-        'regex': r'\b(\d+\.?\d*)\s*cm\b',
-    },
-    'mm': {
-        'suffix': '_cm',  # Convert mm to cm
-        'regex': r'\b(\d+\.?\d*)\s*mm\b',
-        'convert': lambda x: float(x) / 10,
-    },
-    'kg': {
-        'suffix': '_kg',
-        'regex': r'\b(\d+\.?\d*)\s*kg\b',
-    },
-    'g': {
-        'suffix': '_g',
-        'regex': r'\b(\d+\.?\d*)\s*g\b',
-    },
-    'rpm': {
-        'suffix': '_rpm',
-        'regex': r'\b(\d+\.?\d*)\s*rpm\b',
-    },
-    'kwh': {
-        'suffix': '_kwh',
-        'regex': r'\b(\d+\.?\d*)\s*kwh\b',
-    },
-    'watt': {
-        'suffix': '_watt',
-        'regex': r'\b(\d+\.?\d*)\s*(?:watt|W)\b',
-    },
-    'db': {
-        'suffix': '_db',
-        'regex': r'\b(\d+\.?\d*)\s*db\b',
-    },
-    'mins': {
-        'suffix': '_mins',
-        'regex': r'\b(\d+\.?\d*)\s*mins?\b',
-    },
-    'hours': {
-        'suffix': '_hours',
-        'regex': r'\b(\d+\.?\d*)\s*(?:hours?|h)\b',
-    },
-    'litres': {
-        'suffix': '_litres',
-        'regex': r'\b(\d+\.?\d*)\s*(?:litres?|L)\b',
-    },
-    'm': {
-        'suffix': '_m',
-        'regex': r'\b(\d+\.?\d*)\s*m\b',
-    },
-    'v': {
-        'suffix': '_v',
-        'regex': r'\b(\d+\.?\d*)\s*V\b',
-    },
-    'hz': {
-        'suffix': '_hz',
-        'regex': r'\b(\d+\.?\d*)\s*Hz\b',
-    },
-    'amps': {
-        'suffix': '_amps',
-        'regex': r'\b(\d+\.?\d*)\s*(?:amps?|A)\b',
-    },
-    'degrees': {
-        'suffix': '_degrees',
-        'regex': r'\b(\d+\.?\d*)\s*°\b',
-    },
-    'percent': {
-        'suffix': '_percent',
-        'regex': r'\b(\d+\.?\d*)\s*%\b',
-    },
-    'gbp': {
-        'suffix': '_gbp',
-        'regex': r'£\s*(\d+\.?\d*)\b',
-    },
-}
+from .config import (
+    DEFAULT_INPUT_FILE,
+    DEFAULT_UNIFICATION_MAP_FILE,
+    DEFAULT_OUTPUT_FILE,
+    UNIT_PATTERNS,
+    UNIT_PATTERN_ORDER,
+)
 
 
 def normalize_key(key: str) -> str:
@@ -110,13 +39,7 @@ def auto_extract_unit(value: str) -> Tuple[str, Optional[str], Optional[str]]:
     value_str = str(value).strip()
 
     # Try each pattern in priority order (most specific first)
-    # Order matters: try 'kwh' before 'watt', 'mins' before 'm', etc.
-    pattern_order = [
-        'kwh', 'rpm', 'watt', 'litres', 'hours', 'mins', 'mm', 'cm',
-        'kg', 'g', 'db', 'amps', 'degrees', 'percent', 'gbp', 'm', 'v', 'hz'
-    ]
-
-    for unit_name in pattern_order:
+    for unit_name in UNIT_PATTERN_ORDER:
         if unit_name not in UNIT_PATTERNS:
             continue
 
@@ -147,10 +70,10 @@ def auto_extract_unit(value: str) -> Tuple[str, Optional[str], Optional[str]]:
     return value_str, None, None
 
 
-def extract_unit_from_value(value: str, units: List[str], new_key: str = None) -> tuple[str, str]:
+def extract_unit_from_value(value: str, units: List[str], new_key: str = None) -> Tuple[str, str]:
     """
     Extract numeric value and unit from string.
-    Automatically converts units when needed (e.g., mm → cm).
+    Automatically converts units when needed (e.g., mm -> cm).
     Returns: (numeric_value, detected_unit)
     """
     value_str = str(value).strip()
@@ -191,7 +114,7 @@ def extract_unit_from_value(value: str, units: List[str], new_key: str = None) -
     return value_str, ""
 
 
-def apply_merges(specs: dict, merges: dict) -> dict:
+def apply_merges(specs: Dict, merges: Dict) -> Dict:
     """
     Apply merge rules to specs dict.
     When duplicate keys exist, keep the first occurrence (Which.com data).
@@ -212,12 +135,12 @@ def apply_merges(specs: dict, merges: dict) -> dict:
     return result
 
 
-def apply_deletions(specs: dict, deletions: List[str]) -> dict:
+def apply_deletions(specs: Dict, deletions: List[str]) -> Dict:
     """Remove keys marked for deletion."""
     return {k: v for k, v in specs.items() if k not in deletions}
 
 
-def apply_unit_extractions(specs: dict, unit_extractions: dict) -> dict:
+def apply_unit_extractions(specs: Dict, unit_extractions: Dict) -> Dict:
     """
     Extract units from values and rename keys to include units.
     Values become pure numbers/strings.
@@ -254,7 +177,7 @@ def apply_unit_extractions(specs: dict, unit_extractions: dict) -> dict:
     return result
 
 
-def apply_cross_category_removals(specs: dict, features: dict, removals: dict) -> tuple[dict, dict]:
+def apply_cross_category_removals(specs: Dict, features: Dict, removals: Dict) -> Tuple[Dict, Dict]:
     """Remove keys from wrong category."""
     specs_to_remove = removals.get('specs', [])
     features_to_remove = removals.get('features', [])
@@ -265,7 +188,7 @@ def apply_cross_category_removals(specs: dict, features: dict, removals: dict) -
     return clean_specs, clean_features
 
 
-def standardize_product(product: dict, unification_map: dict) -> dict:
+def standardize_product(product: Dict, unification_map: Dict) -> Dict:
     """Apply all standardization rules to a single product."""
     # Deep copy to avoid modifying original
     standardized = copy.deepcopy(product)
@@ -274,11 +197,11 @@ def standardize_product(product: dict, unification_map: dict) -> dict:
     specs = standardized.get('specs', {})
     features = standardized.get('features', {})
 
-    # BUG FIX 1: Apply unit extractions BEFORE merges so old key names are found
+    # Apply unit extractions BEFORE merges so old key names are found
     specs = apply_unit_extractions(specs, unification_map.get('unit_extractions', {}))
     features = apply_unit_extractions(features, unification_map.get('unit_extractions', {}))
 
-    # BUG FIX 3: Apply merges to both specs and features
+    # Apply merges to both specs and features
     specs = apply_merges(specs, unification_map.get('merges', {}))
     features = apply_merges(features, unification_map.get('merges', {}))
 
@@ -286,7 +209,7 @@ def standardize_product(product: dict, unification_map: dict) -> dict:
     specs = apply_deletions(specs, unification_map.get('deletions', []))
     features = apply_deletions(features, unification_map.get('deletions', []))
 
-    # BUG FIX 2: Actually use the returned values from cross-category removals
+    # Apply cross-category removals
     specs, features = apply_cross_category_removals(
         specs,
         features,
@@ -300,11 +223,13 @@ def standardize_product(product: dict, unification_map: dict) -> dict:
     return standardized
 
 
-def main():
-    input_file = "output/complete_products.json"
-    map_file = "output/unification_map.json"
-    output_file = "output/standardized_products.json"
+def standardize_products(input_file: str, map_file: str, output_file: str) -> Dict:
+    """
+    Apply standardization to all products.
 
+    Returns:
+        Dictionary with summary statistics.
+    """
     # Load data
     print(f"Loading {input_file}...")
     with open(input_file, 'r') as f:
@@ -335,12 +260,29 @@ def main():
 
     print(f"\nStandardized data saved to {output_file}")
 
+    # Return summary
+    return {
+        'total_products': len(standardized_products),
+        'merges_applied': len(unification_map.get('merges', {})),
+        'deletions_applied': len(unification_map.get('deletions', [])),
+        'unit_extractions': len(unification_map.get('unit_extractions', {})),
+    }
+
+
+def main():
+    """Main entry point for transformation."""
+    input_file = DEFAULT_INPUT_FILE
+    map_file = DEFAULT_UNIFICATION_MAP_FILE
+    output_file = DEFAULT_OUTPUT_FILE
+
+    summary = standardize_products(input_file, map_file, output_file)
+
     # Print summary
     print("\nSummary:")
-    print(f"  Total products: {len(standardized_products)}")
-    print(f"  Merges applied: {len(unification_map.get('merges', {}))}")
-    print(f"  Deletions applied: {len(unification_map.get('deletions', []))}")
-    print(f"  Unit extractions: {len(unification_map.get('unit_extractions', {}))}")
+    print(f"  Total products: {summary['total_products']}")
+    print(f"  Merges applied: {summary['merges_applied']}")
+    print(f"  Deletions applied: {summary['deletions_applied']}")
+    print(f"  Unit extractions: {summary['unit_extractions']}")
 
 
 if __name__ == "__main__":
