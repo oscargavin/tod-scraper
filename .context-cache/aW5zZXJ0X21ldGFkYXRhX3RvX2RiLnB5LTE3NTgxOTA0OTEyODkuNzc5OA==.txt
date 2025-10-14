@@ -1,0 +1,213 @@
+1-#!/usr/bin/env python3
+2-"""
+3:Insert generated field metadata into Supabase category_metadata table.
+4-Extends existing field_stats JSONB with field categorization data.
+5-"""
+6-import json
+7-import os
+8-import sys
+--
+51-    'full_pipeline_output': None,
+52-}
+53-
+54-def get_category_slug(filename: str) -> Optional[str]:
+55-    """Map filename to category slug."""
+56:    # Remove .metadata.json or .json extension
+57:    base_name = filename.replace('.metadata.json', '').replace('.json', '')
+58-    
+59-    # Check for test files
+60-    if base_name.startswith('test_'):
+61-        return None
+62-    
+--
+65-        return FILENAME_TO_CATEGORY[base_name]
+66-    
+67-    # Default: use base name as slug
+68-    return None  # Be conservative, only use known mappings
+69-
+70:def prepare_metadata_for_db(metadata: Dict) -> Dict:
+71-    """
+72:    Prepare metadata for database insertion.
+73-    Uses the simplified field_values structure.
+74-    """
+75:    # For the new simplified structure, the metadata already contains only field_values
+76:    if 'field_values' in metadata and isinstance(metadata['field_values'], dict):
+77-        # New format - just return field_values directly
+78-        return {
+79:            'field_values': metadata['field_values']
+80-        }
+81-    else:
+82-        # Legacy format - extract what we need
+83-        return {
+84:            'field_values': metadata.get('field_values', {})
+85-        }
+86-
+87-
+88:def insert_category_metadata(metadata: Dict, category_slug: str, supabase: Optional[Client] = None) -> Tuple[bool, str]:
+89-    """
+90:    Insert category metadata into Supabase.
+91-    
+92-    Args:
+93:        metadata: Generated metadata dictionary
+94-        category_slug: Category slug (e.g., 'washing-machines', 'air-fryers')
+95-        supabase: Optional Supabase client instance (will create one if not provided)
+96-        
+97-    Returns:
+98-        Tuple of (success: bool, message: str)
+--
+114-            return False, f"Category with slug '{category_slug}' not found in database"
+115-        
+116-        category_id = category_result.data[0]['id']
+117-        
+118-        # Prepare data for database
+119:        field_data = prepare_metadata_for_db(metadata)
+120-        
+121-        # Get existing field_stats if any
+122:        existing = supabase.table('category_metadata')\
+123-            .select('field_stats')\
+124-            .eq('category_id', category_id)\
+125-            .execute()
+126-        
+127-        if existing.data:
+--
+131-            for key in ['price', 'tod_score', 'numeric_specs']:
+132-                if key in current_stats:
+133-                    field_data[key] = current_stats[key]
+134-            
+135-            # Update existing record
+136:            result = supabase.table('category_metadata')\
+137:                .update({'field_stats': field_data})\
+138-                .eq('category_id', category_id)\
+139-                .execute()
+140-            
+141-            # Build summary
+142-            spec_count = len(field_data.get('field_values', {}).get('specs', {}))
+143-            feature_count = len(field_data.get('field_values', {}).get('features', {}))
+144-
+145:            message = f"✓ Updated metadata for {category_slug} (category_id: {category_id})\n"
+146-            message += f"  • Spec fields with values: {spec_count}\n"
+147-            message += f"  • Feature fields with values: {feature_count}"
+148-            
+149-            return True, message
+150-        else:
+151-            # Insert new record
+152:            result = supabase.table('category_metadata')\
+153-                .insert({
+154-                    'category_id': category_id,
+155-                    'field_stats': field_data
+156-                })\
+157-                .execute()
+158-            
+159-            # Build summary
+160-            spec_count = len(field_data.get('field_values', {}).get('specs', {}))
+161-            feature_count = len(field_data.get('field_values', {}).get('features', {}))
+162-
+163:            message = f"✓ Inserted metadata for {category_slug} (category_id: {category_id})\n"
+164-            message += f"  • Spec fields with values: {spec_count}\n"
+165-            message += f"  • Feature fields with values: {feature_count}"
+166-            
+167-            return True, message
+168-            
+169-    except Exception as e:
+170:        return False, f"Failed to insert metadata for {category_slug}: {e}"
+171-
+172-def main():
+173:    """Insert field metadata into Supabase."""
+174-    # Initialize Supabase client
+175-    supabase_url = os.getenv('SUPABASE_URL')
+176-    supabase_key = os.getenv('SUPABASE_KEY') or os.getenv('SUPABASE_SERVICE_ROLE_KEY')
+177-    
+178-    if not supabase_url or not supabase_key:
+--
+187-    
+188-    print(f"Found {len(categories_map)} categories in database")
+189-    print(f"Categories: {list(categories_map.keys())}")
+190-    print()
+191-    
+192:    # Process metadata files
+193-    output_dir = Path("output")
+194:    metadata_files = list(output_dir.glob("*.metadata.json"))
+195-    
+196:    if not metadata_files:
+197:        print("No metadata files found in output directory")
+198-        return
+199-    
+200:    print(f"Found {len(metadata_files)} metadata files")
+201-    print()
+202-    
+203:    updated = 0
+204-    skipped = 0
+205-    failed = 0
+206-    
+207:    for metadata_file in metadata_files:
+208:        filename = metadata_file.name
+209-        category_slug = get_category_slug(filename)
+210-        
+211-        if not category_slug:
+212-            print(f"⊘ Skipping {filename} (no category mapping)")
+213-            skipped += 1
+--
+219-            continue
+220-        
+221-        category_id = categories_map[category_slug]
+222-        
+223-        try:
+224:            # Load metadata
+225:            with open(metadata_file, 'r', encoding='utf-8') as f:
+226:                metadata = json.load(f)
+227-            
+228-            # Prepare data for database
+229:            field_data = prepare_metadata_for_db(metadata)
+230-            
+231-            # Get existing field_stats if any
+232:            existing = supabase.table('category_metadata')\
+233-                .select('field_stats')\
+234-                .eq('category_id', category_id)\
+235-                .execute()
+236-            
+237-            if existing.data:
+--
+241-                for key in ['price', 'tod_score', 'numeric_specs']:
+242-                    if key in current_stats:
+243-                        field_data[key] = current_stats[key]
+244-                
+245-                # Update existing record
+246:                result = supabase.table('category_metadata')\
+247:                    .update({'field_stats': field_data})\
+248-                    .eq('category_id', category_id)\
+249-                    .execute()
+250:                print(f"✓ Updated metadata for {category_slug} (category_id: {category_id})")
+251-            else:
+252-                # Insert new record
+253:                result = supabase.table('category_metadata')\
+254-                    .insert({
+255-                        'category_id': category_id,
+256-                        'field_stats': field_data
+257-                    })\
+258-                    .execute()
+259:                print(f"✓ Inserted metadata for {category_slug} (category_id: {category_id})")
+260-            
+261-            # Show summary of what was added
+262-            spec_count = len(field_data.get('field_values', {}).get('specs', {}))
+263-            feature_count = len(field_data.get('field_values', {}).get('features', {}))
+264-            print(f"  • Spec fields with values: {spec_count}")
+265-            print(f"  • Feature fields with values: {feature_count}")
+266-            print()
+267-            
+268:            updated += 1
+269-            
+270-        except Exception as e:
+271:            print(f"✗ Failed to process {filename}: {e}")
+272-            failed += 1
+273-    
+274-    # Summary
+275-    print("="*60)
+276-    print("SUMMARY")
+277-    print("="*60)
+278:    print(f"  Updated: {updated}")
+279-    print(f"  Skipped: {skipped}")
+280-    print(f"  Failed: {failed}")
+281:    print(f"  Total: {len(metadata_files)}")
+282-
+283-if __name__ == '__main__':
+284-    main()

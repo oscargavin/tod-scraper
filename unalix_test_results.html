@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Unalix Test Results - 2025-09-16 23:16</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .success { color: green; font-weight: bold; }
+        .failed { color: red; }
+        .url { word-break: break-all; font-size: 12px; }
+        .method { font-weight: bold; }
+        a { color: blue; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>Unalix URL Cleaning Test Results</h1>
+    <p>Generated: 2025-09-16 23:16:22</p>
+    <p>Click any cleaned URL to test if it works!</p>
+
+    <table>
+        <tr>
+            <th>Retailer</th>
+            <th>Best Method</th>
+            <th>Original URL</th>
+            <th>Cleaned URL</th>
+            <th>Status</th>
+        </tr>
+
+        <tr>
+            <td>Amazon</td>
+            <td class="method">clear_url</td>
+            <td class="url">https://www.amazon.co.uk/dp/B0CQKCG1T2?tag=which-squirrel-21&ascsubtag=[URL]&th=...</td>
+            <td class="url">
+                <a href="https://www.amazon.co.uk/dp/B0CQKCG1T2" target="_blank">
+                    https://www.amazon.co.uk/dp/B0CQKCG1T2
+                </a>
+            </td>
+            <td class="success">✓ Cleaned</td>
+        </tr>
+    
+        <tr>
+            <td>Amazon Marketplace UK</td>
+            <td class="method">clear_url</td>
+            <td class="url">https://www.amazon.co.uk/dp/B0DVZQCWY8?tag=which1-21&linkCode=ogi&th=1&psc=1...</td>
+            <td class="url">
+                <a href="https://www.amazon.co.uk/dp/B0DVZQCWY8" target="_blank">
+                    https://www.amazon.co.uk/dp/B0DVZQCWY8
+                </a>
+            </td>
+            <td class="success">✓ Cleaned</td>
+        </tr>
+    
+        <tr>
+            <td>B and Q</td>
+            <td class="method">unshort_url</td>
+            <td class="url">https://clicks.trx-hub.com/xid/which_c9990_which?q=https%3A%2F%2Fdiy.pxf.io%2Fc%...</td>
+            <td class="url">
+                <a href="https://www.diy.com/departments/tower-heritage-3kw-pyramid-kettle-dome-white/5011832074652_BQ.prd?irclickid=TbcVY7RVWxycTgn3N7X1XyRIUkpw6PWlnWmNVw0&irpid=3065153&irgwc=1" target="_blank">
+                    https://www.diy.com/departments/tower-heritage-3kw-pyramid-kettle-dome-white/5011832074652_BQ.prd?irclickid=TbcVY7RVWxycTgn3N7X1XyRIUkpw6PWlnWmNVw0&irpid=3065153&irgwc=1
+                </a>
+            </td>
+            <td class="success">✓ Cleaned</td>
+        </tr>
+    
+        <tr>
+            <td>AO</td>
+            <td class="method">unshort_url</td>
+            <td class="url">https://clicks.trx-hub.com/xid/which_c9990_which?q=https%3A%2F%2Fwww.awin1.com%2...</td>
+            <td class="url">
+                <a href="https://ao.com/product/100130-morphy-richards-venture-kettle-stainless-steel-90146-78.aspx?sv_campaign_id=634144&sv_tax1=affiliate&sv_tax2=&sv_tax3=Which%3F+Limited&sv_tax4=0&sv_affiliate_id=634144&awc=19526_1758060966_af055240e97084cff12028349b774452" target="_blank">
+                    https://ao.com/product/100130-morphy-richards-venture-kettle-stainless-steel-90146-78.aspx?sv_campaign_id=634144&sv_tax1=affiliate&sv_tax2=&sv_tax3=Which%3F+Limited&sv_tax4=0&sv_affiliate_id=634144&awc=19526_1758060966_af055240e97084cff12028349b774452
+                </a>
+            </td>
+            <td class="success">✓ Cleaned</td>
+        </tr>
+    
+        <tr>
+            <td>Very</td>
+            <td class="method">error</td>
+            <td class="url">https://clicks.trx-hub.com/xid/which_c9990_which?q=https%3A%2F%2Fwww.awin1.com%2...</td>
+            <td class="url">
+                <a href="https://clicks.trx-hub.com/xid/which_c9990_which?q=https%3A%2F%2Fwww.awin1.com%2Fpclick.php%3Fp%3D41678118280%26a%3D634144%26m%3D3090&p=https%3A%2F%2Fwww.which.co.uk%2Freviews%2Fkettles%2Fdelonghi-ballerina-seta-kbds3001-bl&event_type=click&userid=&clickid=f9fb0f61-83a6-4b71-8e03-8dadb8dd7ac1&content_type=product+page&vertical=appliances&sub_vertical=kettles-and-coffee-makers&category=kettles&super_category=&platform=web&item_group=Lowest+Available+Prices&product_name=DeLonghi+Ballerina+Seta+KBDS3001.BL&product_id=WH12085-0176-00&productprice=59.99" target="_blank">
+                    https://clicks.trx-hub.com/xid/which_c9990_which?q=https%3A%2F%2Fwww.awin1.com%2Fpclick.php%3Fp%3D41678118280%26a%3D634144%26m%3D3090&p=https%3A%2F%2Fwww.which.co.uk%2Freviews%2Fkettles%2Fdelonghi-ballerina-seta-kbds3001-bl&event_type=click&userid=&clickid=f9fb0f61-83a6-4b71-8e03-8dadb8dd7ac1&content_type=product+page&vertical=appliances&sub_vertical=kettles-and-coffee-makers&category=kettles&super_category=&platform=web&item_group=Lowest+Available+Prices&product_name=DeLonghi+Ballerina+Seta+KBDS3001.BL&product_id=WH12085-0176-00&productprice=59.99
+                </a>
+            </td>
+            <td class="failed">✗ Failed</td>
+        </tr>
+    
+        <tr>
+            <td>Currys</td>
+            <td class="method">unshort_url</td>
+            <td class="url">https://clicks.trx-hub.com/xid/which_c9990_which?q=https%3A%2F%2Fwww.awin1.com%2...</td>
+            <td class="url">
+                <a href="https://www.currys.co.uk/products/tower-heritage-t10076-traditional-kettle-white-10270974.html?sv1=affiliate&sv_campaign_id=634144&awc=1599_1758060975_79c56b82fbce51fa37cd55eecbb2084a&srcid=369&xtor=AL-1&sv1=affiliate&sv_campaign_id=634144" target="_blank">
+                    https://www.currys.co.uk/products/tower-heritage-t10076-traditional-kettle-white-10270974.html?sv1=affiliate&sv_campaign_id=634144&awc=1599_1758060975_79c56b82fbce51fa37cd55eecbb2084a&srcid=369&xtor=AL-1&sv1=affiliate&sv_campaign_id=634144
+                </a>
+            </td>
+            <td class="success">✓ Cleaned</td>
+        </tr>
+    
+        <tr>
+            <td>George at ASDA</td>
+            <td class="method">unshort_url</td>
+            <td class="url">https://zeta-live.getsquirrel.co/marketplace/96/12877279/1999?click_ref=***...</td>
+            <td class="url">
+                <a href="https://direct.asda.com/george/electricals/kitchen-appliances/kettles-toasters/morphy-richards-venture-stainless-steel-pyramid-kettle/060050669,default,pd.html?cjdata=MXxZfDB8WXww&cjevent=c3615bc2934a11f080f100160a18b8fa" target="_blank">
+                    https://direct.asda.com/george/electricals/kitchen-appliances/kettles-toasters/morphy-richards-venture-stainless-steel-pyramid-kettle/060050669,default,pd.html?cjdata=MXxZfDB8WXww&cjevent=c3615bc2934a11f080f100160a18b8fa
+                </a>
+            </td>
+            <td class="success">✓ Cleaned</td>
+        </tr>
+    
+        <tr>
+            <td>Morphy Richards UK</td>
+            <td class="method">unshort_url</td>
+            <td class="url">https://zeta-live.getsquirrel.co/marketplace/96/12877279/210?click_ref=***...</td>
+            <td class="url">
+                <a href="https://www.morphyrichards.co.uk/products/venture-pyramid-kettle-silver?irclickid=QSsVlaRVWxycTgn3N7X1XyRIUkpw6PT1nWmNVw0&sharedid=&irpid=3683635&irgwc=1" target="_blank">
+                    https://www.morphyrichards.co.uk/products/venture-pyramid-kettle-silver?irclickid=QSsVlaRVWxycTgn3N7X1XyRIUkpw6PT1nWmNVw0&sharedid=&irpid=3683635&irgwc=1
+                </a>
+            </td>
+            <td class="success">✓ Cleaned</td>
+        </tr>
+    
+        <tr>
+            <td>Marks Electrical</td>
+            <td class="method">clear_url</td>
+            <td class="url">https://visit.markselectrical.co.uk/click?a(3310879)p(327928)product(50555-10013...</td>
+            <td class="url">
+                <a href="https://visit.markselectrical.co.uk/click?a(3310879)p(327928)product(50555-100130)ttid(3)url(https%3A%2F%2Fmarkselectrical.co.uk%2F100130_morphy-richards-pyramid-kettle%3Freferrer%3DTradedoubler%26" target="_blank">
+                    https://visit.markselectrical.co.uk/click?a(3310879)p(327928)product(50555-100130)ttid(3)url(https%3A%2F%2Fmarkselectrical.co.uk%2F100130_morphy-richards-pyramid-kettle%3Freferrer%3DTradedoubler%26
+                </a>
+            </td>
+            <td class="success">✓ Cleaned</td>
+        </tr>
+    
+        <tr>
+            <td>Ryman UK (nested)</td>
+            <td class="method">unshort_url</td>
+            <td class="url">https://clicks.trx-hub.com/xid/which_c9990_which?q=https%3A%2F%2Fwhich.digidip.n...</td>
+            <td class="url">
+                <a href="https://www.ryman.co.uk/morphy-richards-venture-brushed-stainless-steel-pyramid-kettle-2?https://www.ryman.co.uk/morphy-richards-venture-brushed-stainless-steel-pyramid-kettle-2" target="_blank">
+                    https://www.ryman.co.uk/morphy-richards-venture-brushed-stainless-steel-pyramid-kettle-2?https://www.ryman.co.uk/morphy-richards-venture-brushed-stainless-steel-pyramid-kettle-2
+                </a>
+            </td>
+            <td class="success">✓ Cleaned</td>
+        </tr>
+    
+        <tr>
+            <td>Wayfair (nested)</td>
+            <td class="method">unshort_url</td>
+            <td class="url">https://clicks.trx-hub.com/xid/which_c9990_which?q=https%3A%2F%2Fwhich.digidip.n...</td>
+            <td class="url">
+                <a href="https://www.wayfair.co.uk/Tower--Tower-Heritage-Dome-Kettle-with-Rapid-Boil-1.7L-3000W-Optic-White-with-Chrome-Accents-T10076WHT-L1070-K~SBSF1838.html" target="_blank">
+                    https://www.wayfair.co.uk/Tower--Tower-Heritage-Dome-Kettle-with-Rapid-Boil-1.7L-3000W-Optic-White-with-Chrome-Accents-T10076WHT-L1070-K~SBSF1838.html
+                </a>
+            </td>
+            <td class="success">✓ Cleaned</td>
+        </tr>
+    
+        <tr>
+            <td>Downtown Stores</td>
+            <td class="method">unshort_url</td>
+            <td class="url">https://clicks.trx-hub.com/xid/which_c9990_which?q=https%3A%2F%2Fdowntownstores....</td>
+            <td class="url">
+                <a href="https://www.downtownstores.co.uk/morphy-richards-100130-15l-venture-pyramid-rapid-boil-kettle-brushed-stainless-steel/p67816?cv=229144&irclickid=QlvzbORVWxycTgn3N7X1XyRIUkpw6PTVnWmNVw0&sharedid=&irpid=3065153&irgwc=1" target="_blank">
+                    https://www.downtownstores.co.uk/morphy-richards-100130-15l-venture-pyramid-rapid-boil-kettle-brushed-stainless-steel/p67816?cv=229144&irclickid=QlvzbORVWxycTgn3N7X1XyRIUkpw6PTVnWmNVw0&sharedid=&irpid=3065153&irgwc=1
+                </a>
+            </td>
+            <td class="success">✓ Cleaned</td>
+        </tr>
+    
+        <tr>
+            <td>Sonic Direct</td>
+            <td class="method">unshort_url</td>
+            <td class="url">https://clicks.trx-hub.com/xid/which_c9990_which?q=https%3A%2F%2Fwww.awin1.com%2...</td>
+            <td class="url">
+                <a href="https://www.sonicdirect.co.uk/prod/Kettles/euronics/Morphy-Richards-100130-Pyramid-Rapid-Boil-Kettle---Brushed-Stainless-Steel-15L-3kW?sv1=affiliate&sv_campaign_id=634144&awc=5363_1758060980_5cc338f405a23168f7d8277b7b0d8ade" target="_blank">
+                    https://www.sonicdirect.co.uk/prod/Kettles/euronics/Morphy-Richards-100130-Pyramid-Rapid-Boil-Kettle---Brushed-Stainless-Steel-15L-3kW?sv1=affiliate&sv_campaign_id=634144&awc=5363_1758060980_5cc338f405a23168f7d8277b7b0d8ade
+                </a>
+            </td>
+            <td class="success">✓ Cleaned</td>
+        </tr>
+    
+        <tr>
+            <td>Lakeland</td>
+            <td class="method">unshort_url</td>
+            <td class="url">https://clicks.trx-hub.com/xid/which_c9990_which?q=https%3A%2F%2Fwww.awin1.com%2...</td>
+            <td class="url">
+                <a href="https://www.miravia.es/p/i1360284535892194-s2076763187292386.html?sv1=affiliate&sv_campaign_id=634144&awc=37168_1758060982_08c244683ffd25a5d0712aa104224ad5&publishertagid=&sitename=https%3A%2F%2Fwww.which.co.uk%2F&affiliatedomain=www.which.co.uk&publishertagname1=&exlaz=d_a:mm_100000094_2000000080_3000000095:clkgiv4qv1j5a9jc7tolvv::" target="_blank">
+                    https://www.miravia.es/p/i1360284535892194-s2076763187292386.html?sv1=affiliate&sv_campaign_id=634144&awc=37168_1758060982_08c244683ffd25a5d0712aa104224ad5&publishertagid=&sitename=https%3A%2F%2Fwww.which.co.uk%2F&affiliatedomain=www.which.co.uk&publishertagname1=&exlaz=d_a:mm_100000094_2000000080_3000000095:clkgiv4qv1j5a9jc7tolvv::
+                </a>
+            </td>
+            <td class="success">✓ Cleaned</td>
+        </tr>
+    
+    </table>
+
+    <h2>Summary</h2>
+    <ul>
+
+        <li>Total URLs tested: 14</li>
+        <li>Successfully cleaned: 13 (92.9%)</li>
+        <li>Best with clear_url: 3</li>
+        <li>Best with unshort_url: 10</li>
+        <li>Failed to clean: 1</li>
+    </ul>
+</body>
+</html>

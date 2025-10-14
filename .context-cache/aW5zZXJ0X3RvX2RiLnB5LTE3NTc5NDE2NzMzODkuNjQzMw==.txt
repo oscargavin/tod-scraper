@@ -1,0 +1,145 @@
+1-#!/usr/bin/env python3
+2-"""
+3:Insert scraped products into Supabase database
+4-"""
+5-import json
+6-import os
+7-import re
+8-from typing import Dict, List, Optional, Tuple
+--
+34-def slug_to_display_name(slug: str) -> str:
+35-    """Convert slug to display name (e.g., 'washing-machines' -> 'Washing Machines')"""
+36-    return ' '.join(word.capitalize() for word in slug.split('-'))
+37-
+38-def extract_brand_model(name: str) -> Tuple[str, str]:
+39:    """Extract brand and model from product name"""
+40-    # Common brand patterns
+41-    brands = ['Miele', 'Candy', 'AEG', 'Bosch', 'Samsung', 'LG', 'Hotpoint', 
+42-              'Indesit', 'Beko', 'Whirlpool', 'Zanussi', 'Hoover', 'Hisense',
+43-              'Grundig', 'Haier', 'Electrolux', 'Siemens', 'Fisher & Paykel',
+44-              'Blomberg', 'Sharp']
+--
+52-    parts = name.split(' ', 1)
+53-    if len(parts) == 2:
+54-        return parts[0], parts[1]
+55-    return name, name
+56-
+57:def insert_products(data: Dict, category_slug: str, supabase: Optional[Client] = None) -> Dict[str, int]:
+58-    """
+59:    Insert products into Supabase database.
+60-    
+61-    Args:
+62:        data: Dictionary containing products array
+63-        category_slug: Category slug (e.g., 'washing-machines', 'air-fryers')
+64-        supabase: Optional Supabase client instance (will create one if not provided)
+65-    
+66-    Returns:
+67:        Dictionary with insertion statistics
+68-    """
+69-    # Initialize Supabase if not provided
+70-    if not supabase:
+71-        supabase_url = os.getenv('SUPABASE_URL')
+72-        supabase_key = os.getenv('SUPABASE_KEY')
+--
+85-            category_id = category_result.data[0]['id']
+86-            print(f"Using existing category: {category_slug} (ID: {category_id})")
+87-        else:
+88-            # Create new category
+89-            display_name = slug_to_display_name(category_slug)
+90:            new_category = supabase.table('categories').insert({
+91-                'slug': category_slug,
+92-                'name': display_name
+93-            }).execute()
+94-            
+95-            if new_category.data:
+--
+99-                raise ValueError(f"Failed to create category with slug '{category_slug}'")
+100-                
+101-    except Exception as e:
+102-        raise ValueError(f"Failed to fetch or create category: {e}")
+103-    
+104:    # Process each product
+105:    products = data.get('products', [])
+106:    inserted = 0
+107-    failed = 0
+108-    errors = []
+109-    
+110:    for product in products:
+111-        try:
+112-            # Extract brand and model
+113:            brand, model = extract_brand_model(product['name'])
+114-            
+115-            # Extract review data and TOD score
+116:            review_data = product.get('reviews', {})
+117-            tod_score = None
+118-            reviews_json = {}
+119-            
+120-            if review_data:
+121-                # Extract TOD score
+--
+128-                        'summary': sentiment.get('summary', ''),
+129-                        'pros': sentiment.get('pros', []),
+130-                        'cons': sentiment.get('cons', [])
+131-                    }
+132-            
+133:            # Prepare product data
+134:            product_data = {
+135-                'category_id': category_id,
+136:                'name': product['name'],
+137-                'brand': brand,
+138-                'model': model,
+139:                'price': parse_price(product.get('price')),
+140:                'source_url': product.get('whichUrl'),
+141:                'specs': product.get('specs', {}),
+142:                'features': product.get('features', {}),
+143-                'tod_score': tod_score,
+144-                'reviews': reviews_json if reviews_json else None,
+145:                'images': product.get('images', {}),
+146:                'retailer_links': product.get('retailerLinks', [])  # Now included in schema
+147-            }
+148-            
+149-            # Insert into database
+150:            result = supabase.table('products').insert(product_data).execute()
+151:            inserted += 1
+152:            print(f"✓ Inserted: {product['name']}")
+153-            
+154-        except Exception as e:
+155-            failed += 1
+156:            error_msg = f"Failed to insert {product['name']}: {e}"
+157-            errors.append(error_msg)
+158-            print(f"✗ {error_msg}")
+159-    
+160-    return {
+161:        'inserted': inserted,
+162-        'failed': failed,
+163:        'total': len(products),
+164-        'errors': errors
+165-    }
+166-
+167-
+168-def main():
+169-    """Command-line interface for standalone usage"""
+170-    import argparse
+171-    
+172:    parser = argparse.ArgumentParser(description='Insert scraped products into Supabase database')
+173-    parser.add_argument('--file', '-f', default='output/full_pipeline_output.json',
+174-                        help='JSON file to process (default: output/full_pipeline_output.json)')
+175-    parser.add_argument('--category', '-c', default='washing-machines',
+176-                        help='Category slug (default: washing-machines)')
+177-    args = parser.parse_args()
+--
+189-            print("Error: SUPABASE_URL and SUPABASE_KEY must be set in .env")
+190-            return
+191-        
+192-        supabase = create_client(supabase_url, supabase_key)
+193-        
+194:        # Insert products
+195:        stats = insert_products(data, args.category, supabase)
+196-        
+197-        print(f"\nSummary:")
+198:        print(f"  Inserted: {stats['inserted']}")
+199-        print(f"  Failed: {stats['failed']}")
+200-        print(f"  Total: {stats['total']}")
+201-        
+202-    except Exception as e:
+203-        print(f"Error: {e}")
