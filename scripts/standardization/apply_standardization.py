@@ -101,12 +101,19 @@ def standardize_product(product: dict, unification_map: dict) -> dict:
     specs = standardized.get('specs', {})
     features = standardized.get('features', {})
 
-    # Apply transformations in order
-    specs = apply_merges(specs, unification_map.get('merges', {}))
+    # BUG FIX 1: Apply unit extractions BEFORE merges so old key names are found
     specs = apply_unit_extractions(specs, unification_map.get('unit_extractions', {}))
-    specs = apply_deletions(specs, unification_map.get('deletions', []))
+    features = apply_unit_extractions(features, unification_map.get('unit_extractions', {}))
 
-    # Apply cross-category removals
+    # BUG FIX 3: Apply merges to both specs and features
+    specs = apply_merges(specs, unification_map.get('merges', {}))
+    features = apply_merges(features, unification_map.get('merges', {}))
+
+    # Apply deletions
+    specs = apply_deletions(specs, unification_map.get('deletions', []))
+    features = apply_deletions(features, unification_map.get('deletions', []))
+
+    # BUG FIX 2: Actually use the returned values from cross-category removals
     specs, features = apply_cross_category_removals(
         specs,
         features,
