@@ -12,12 +12,17 @@ from collections import Counter, defaultdict
 
 
 def check_units_in_values(value: str, common_units: list) -> list:
-    """Check if value contains any common units."""
+    """
+    Check if value contains any common units (with digits).
+    Only flags units that have a digit preceding them to avoid false positives like "A to G".
+    """
     found_units = []
     value_str = str(value)
 
     for unit in common_units:
-        if re.search(rf'\b{re.escape(unit)}\b', value_str, re.IGNORECASE):
+        # Pattern requires a digit before the unit to avoid false positives
+        pattern = rf'\b(\d+\.?\d*)\s*{re.escape(unit)}\b'
+        if re.search(pattern, value_str, re.IGNORECASE):
             found_units.append(unit)
 
     return found_units
