@@ -1,154 +1,29 @@
 {
   "merges": {
-    "max_spin_speed": "maximum_spin_speed_revolutions_per_minute",
-    "max_spin_speed_rpm": "maximum_spin_speed_revolutions_per_minute",
-    "maximum_spin_speed": "maximum_spin_speed_revolutions_per_minute",
-    "cotton_capacity_kg": "washing_capacity_kilograms",
-    "wash_load": "washing_capacity_kilograms",
-    "rated_capacity": "washing_capacity_kilograms",
-    "old_energy_rating": "energy_rating",
-    "energy_efficiency_class": "energy_rating",
-    "energy_efficiency_rating": "energy_rating",
-    "delayed_start_timer": "delay_timer",
-    "delay_end": "delay_timer",
-    "start_timer_delay_hrs": "delay_start_timer_length",
-    "product_colour": "colour",
-    "control_panel_type": "control_type",
-    "noise_emission_class": "noise_rating",
-    "noise_level": "noise_level_spin",
-    "maximum_noise_level_decibels": "noise_level_spin",
-    "also_known_as": "model",
-    "warranty": "manufacturer_warranty",
-    "remaining_time_indicator": "time_remaining_display",
-    "time_to_end_of_programme": "time_remaining_display",
-    "list_of_programmes": "washing_programs",
-    "number_of_programmes": "number_of_wash_programmes",
-    "energy_consumption": "energy_consumption_per_100_cycles",
-    "energy_consumption_washing_per_cycle": "energy_consumption_per_wash_cycle",
-    "water_consumption": "water_consumption_per_cycle",
-    "wifi_connectivity": "wifi",
-    "smart_connectivity": "wifi",
-    "quick_wash_cycle_time": "quick_wash_time",
-    "cycle_time_quick_washing_program": "quick_wash_time",
-    "hinge_position": "door_hinge_position",
-    "door_hinge": "door_hinge_position",
-    "foam_detection": "foam_control",
-    "foam_control_system": "foam_control",
-    "interior_light": "drum_light",
-    "drum_interior_light": "drum_light",
-    "power_cord_length": "power_cable_length",
-    "cord_length": "power_cable_length",
-    "inverter_motor": "motor_type",
-    "digital_inverter_motor": "motor_type",
-    "speed_inverter_motor": "motor_type",
-    "inverter_compressor": "motor_type",
-    "drumclean": "drum_clean",
-    "half_load_function": "auto_half_load",
-    "auto_dose": "automatic_dosing",
+    "max_spin_speed": "max_spin_speed_rpm",
+    "maximum_spin_speed_revolutions_per_minute": "max_spin_speed_rpm",
+    "maximum_spin_speed": "max_spin_speed_rpm",
+    "max_spin_speed_standard_programme": "max_spin_speed_rpm",
+    "wash_load": "washing_capacity_kg",
+    "washing_capacity_kilograms": "washing_capacity_kg",
+    "rated_capacity": "washing_capacity_kg",
+    "water_remaining_after_spin": "residual_moisture_percent",
+    "residual_moisture": "residual_moisture_percent",
+    "energy_consumption_washing_per_cycle": "energy_consumption_per_wash_cycle_kwh",
+    "water_consumption_per_cycle": "water_consumption_litres",
+    "quick_wash_cycle_time": "quick_wash_time_mins",
+    "cycle_time_quick_washing_program": "quick_wash_time_mins",
+    "power_consumption_typical": "electrical_connection_watt",
+    "min_spin_speed": "min_spin_speed_rpm",
+    "minimum_spin_speed": "min_spin_speed_rpm",
+    "weight_kilograms": "weight_kg",
+    "weight": "weight_kg",
     "auto_dose_system": "automatic_dosing",
-    "i_dos": "automatic_dosing",
-    "detergent_scan": "automatic_dosing",
-    "appliance_placement": "type",
-    "fit_type": "type",
-    "adjustable_spin_speed": "variable_spin",
-    "adjustable_temperature": "variable_temperature",
-    "aquastop": "anti_flood_devices",
-    "overflow_protection": "anti_flood_devices",
-    "power_consumption_typical": "electrical_connection",
-    "current": "fuse_rating",
-    "minimum_spin_speed": "min_spin_speed",
-    "pause_add": "pause_add_item",
-    "super_extra_rinse": "extra_rinse",
-    "hand_wash": "delicates_or_handwash",
-    "delicates": "delicates_or_handwash",
-    "hygiene": "hygiene_option",
-    "outdoor_wear": "outdoor_programme",
-    "stain_removal": "stainremoval",
-    "steam_cycle": "steam",
-    "child_lock": "panel_safety_lock",
-    "delay_timer": "start_end_delay",
-    "display_type": "digital_display"
+    "auto_dose": "automatic_dosing"
   },
   "deletions": [
     "dimensions",
-    "manufacturer_warranty_registration_required",
-    "email",
-    "consent",
-    "box_of_contents",
-    "eprel_id",
-    "energy_efficiency_scale",
-    "total_depth_including_protruding_parts",
-    "depth_with_door_closed",
-    "depth_with_door_open",
-    "weight_kilograms",
-    "standby_power_consumption",
-    "boxed_height",
-    "boxed_width",
-    "boxed_depth",
-    "no_rinse",
-    "fast",
-    "sportswear",
-    "water_plus_system",
-    "requires_own_furniture_door",
-    "reversible_door",
-    "a_10",
-    "activewater_plus",
-    "easy_care",
-    "hygiene_plus",
-    "jeans_dark_laundry",
-    "variodrum",
-    "jet_wash",
-    "auto_wash",
-    "hygiene_guard",
-    "purejet",
-    "15_quick_wash",
-    "ai_ecobubble",
-    "ai_energy_mode",
-    "ai_wash",
-    "ecobubble",
-    "family_hub",
-    "hygiene_steam",
-    "quickdrive",
-    "smartthings",
-    "spacemax_technology",
-    "stayclean_drawer",
-    "super_speed_39",
-    "super_speed_59",
-    "on_device_bixby",
-    "instruction_booklet",
-    "inlet_hose_length",
-    "outlet_hose_length",
-    "door_opening_angle",
-    "apps_supported",
-    "apps_functions",
-    "overdosage_indication",
-    "liquid_detergent_container",
-    "siemens_technologies_clothes_care",
-    "dosageassist",
-    "easy_iron_plus_39",
-    "eco_cycle",
-    "full_load_in_59",
-    "hon_app",
-    "kg_detector",
-    "quick_clean_technology",
-    "rapid_cycles",
-    "blue_woolmark",
-    "protex_drum",
-    "softwater",
-    "drying_load",
-    "interior_material",
-    "powerclean_59min",
-    "green_woolmark",
-    "my_aeg_care_app",
-    "plussteam",
-    "remote_start",
-    "stain_action_option",
-    "universaldose",
-    "aqua_control",
-    "kopower_59_min",
-    "display",
-    "built_in_display",
-    "smart"
+    "energy_consumption"
   ],
   "unit_extractions": {
     "height": {
@@ -169,17 +44,17 @@
       ],
       "new_key": "depth_cm"
     },
+    "cotton_capacity_kg": {
+      "units": [
+        "kg"
+      ],
+      "new_key": "cotton_capacity_kg"
+    },
     "cotton_40_c_run_time_mins": {
       "units": [
         "mins"
       ],
-      "new_key": "cotton_40_c_run_time_minutes"
-    },
-    "synthetic_40_c_run_time_mins": {
-      "units": [
-        "mins"
-      ],
-      "new_key": "synthetic_40_c_run_time_minutes"
+      "new_key": "cotton_40_c_run_time_mins"
     },
     "annual_energy_cost": {
       "units": [
@@ -187,16 +62,28 @@
       ],
       "new_key": "annual_energy_cost_gbp"
     },
+    "max_spin_speed": {
+      "units": [
+        "RPM"
+      ],
+      "new_key": "max_spin_speed_rpm"
+    },
     "energy_consumption_per_100_cycles": {
       "units": [
         "Kwh"
       ],
       "new_key": "energy_consumption_per_100_cycles_kwh"
     },
+    "manufacturer_warranty": {
+      "units": [
+        "Year",
+        "year"
+      ],
+      "new_key": "manufacturer_warranty_years"
+    },
     "delay_start_timer_length": {
       "units": [
-        "Hours",
-        "H"
+        "Hours"
       ],
       "new_key": "delay_start_timer_length_hours"
     },
@@ -204,19 +91,17 @@
       "units": [
         "%"
       ],
-      "new_key": "water_remaining_after_spin_percent"
+      "new_key": "residual_moisture_percent"
     },
     "electrical_connection": {
       "units": [
-        "Watt",
-        "W"
+        "Watt"
       ],
-      "new_key": "rated_power_watt"
+      "new_key": "electrical_connection_watt"
     },
     "fuse_rating": {
       "units": [
-        "amps",
-        "A"
+        "amps"
       ],
       "new_key": "fuse_rating_amps"
     },
@@ -228,17 +113,15 @@
     },
     "energy_consumption_per_wash_cycle": {
       "units": [
-        "Kwh",
-        "kWh"
+        "Kwh"
       ],
       "new_key": "energy_consumption_per_wash_cycle_kwh"
     },
-    "water_consumption_per_cycle": {
+    "water_consumption": {
       "units": [
-        "Litres",
-        "L"
+        "Litres"
       ],
-      "new_key": "water_consumption_per_cycle_litres"
+      "new_key": "water_consumption_litres"
     },
     "noise_level": {
       "units": [
@@ -248,42 +131,159 @@
     },
     "quick_wash_time": {
       "units": [
-        "Minutes",
-        "min"
+        "Minutes"
       ],
-      "new_key": "quick_wash_time_minutes"
+      "new_key": "quick_wash_time_mins"
     },
     "cycle_time_max": {
       "units": [
         "min"
       ],
-      "new_key": "cycle_time_max_minutes"
+      "new_key": "cycle_time_max_mins"
     },
     "power_cable_length": {
       "units": [
-        "cm",
-        "m"
+        "cm"
       ],
-      "new_key": "power_cable_length_metres"
+      "new_key": "power_cable_length_cm"
     },
     "drain_hose_length": {
       "units": [
         "m"
       ],
-      "new_key": "drain_hose_length_metres"
+      "new_key": "drain_hose_length_m"
     },
     "water_fill_hose_length": {
       "units": [
         "m"
       ],
-      "new_key": "water_fill_hose_length_metres"
+      "new_key": "water_fill_hose_length_m"
+    },
+    "power_cord_length": {
+      "units": [
+        "m"
+      ],
+      "new_key": "power_cord_length_m"
+    },
+    "cord_length": {
+      "units": [
+        "m"
+      ],
+      "new_key": "cord_length_m"
     },
     "drum_volume": {
       "units": [
-        "L",
-        "Litres"
+        "L"
       ],
       "new_key": "drum_volume_litres"
+    },
+    "standby_power_consumption": {
+      "units": [
+        "Watt"
+      ],
+      "new_key": "standby_power_consumption_watt"
+    },
+    "washing_capacity_kilograms": {
+      "units": [
+        "kg"
+      ],
+      "new_key": "washing_capacity_kg"
+    },
+    "maximum_spin_speed_revolutions_per_minute": {
+      "units": [
+        "rpm"
+      ],
+      "new_key": "max_spin_speed_rpm"
+    },
+    "start_timer_delay_hrs": {
+      "units": [
+        "H"
+      ],
+      "new_key": "start_timer_delay_hours"
+    },
+    "maximum_noise_level_decibels": {
+      "units": [
+        "dB"
+      ],
+      "new_key": "maximum_noise_level_db"
+    },
+    "quick_wash_cycle_time": {
+      "units": [
+        "mins"
+      ],
+      "new_key": "quick_wash_time_mins"
+    },
+    "weight_kilograms": {
+      "units": [
+        "kg"
+      ],
+      "new_key": "weight_kg"
+    },
+    "boxed_height": {
+      "units": [
+        "cm"
+      ],
+      "new_key": "boxed_height_cm"
+    },
+    "boxed_width": {
+      "units": [
+        "cm"
+      ],
+      "new_key": "boxed_width_cm"
+    },
+    "boxed_depth": {
+      "units": [
+        "cm"
+      ],
+      "new_key": "boxed_depth_cm"
+    },
+    "inlet_hose_length": {
+      "units": [
+        "m"
+      ],
+      "new_key": "inlet_hose_length_m"
+    },
+    "outlet_hose_length": {
+      "units": [
+        "m"
+      ],
+      "new_key": "outlet_hose_length_m"
+    },
+    "cycle_time_quick_washing_program": {
+      "units": [
+        "min"
+      ],
+      "new_key": "quick_wash_time_mins"
+    },
+    "door_opening_angle": {
+      "units": [
+        "\u00b0"
+      ],
+      "new_key": "door_opening_angle_degrees"
+    },
+    "maximum_spin_speed": {
+      "units": [
+        "RPM"
+      ],
+      "new_key": "max_spin_speed_rpm"
+    },
+    "minimum_spin_speed": {
+      "units": [
+        "RPM"
+      ],
+      "new_key": "min_spin_speed_rpm"
+    },
+    "energy_consumption_washing_per_cycle": {
+      "units": [
+        "kWh"
+      ],
+      "new_key": "energy_consumption_per_wash_cycle_kwh"
+    },
+    "power_consumption_typical": {
+      "units": [
+        "W"
+      ],
+      "new_key": "electrical_connection_watt"
     },
     "weight": {
       "units": [
@@ -291,59 +291,106 @@
       ],
       "new_key": "weight_kg"
     },
+    "depth_with_door_closed": {
+      "units": [
+        "mm"
+      ],
+      "new_key": "depth_with_door_closed_mm"
+    },
+    "depth_with_door_open": {
+      "units": [
+        "mm"
+      ],
+      "new_key": "depth_with_door_open_mm"
+    },
     "noise_level_wash": {
       "units": [
         "dB"
       ],
       "new_key": "noise_level_wash_db"
     },
-    "min_spin_speed": {
-      "units": [],
-      "new_key": "min_spin_speed_rpm"
+    "drying_load": {
+      "units": [
+        "Kg"
+      ],
+      "new_key": "drying_load_kg"
     },
-    "washing_capacity_kilograms": {
+    "wash_load": {
+      "units": [
+        "Kg"
+      ],
+      "new_key": "washing_capacity_kg"
+    },
+    "rated_capacity": {
       "units": [
         "kg"
       ],
-      "new_key": "washing_capacity_kilograms"
+      "new_key": "washing_capacity_kg"
     },
-    "maximum_spin_speed_revolutions_per_minute": {
+    "water_consumption_per_cycle": {
       "units": [
-        "rpm",
-        "RPM"
+        "L"
       ],
-      "new_key": "maximum_spin_speed_revolutions_per_minute"
+      "new_key": "water_consumption_litres"
+    },
+    "residual_moisture": {
+      "units": [
+        "%"
+      ],
+      "new_key": "residual_moisture_percent"
+    },
+    "total_depth_including_protruding_parts": {
+      "units": [
+        "cm"
+      ],
+      "new_key": "total_depth_including_protruding_parts_cm"
     },
     "ac_input_voltage": {
       "units": [
         "V"
       ],
-      "new_key": "ac_input_voltage_volt"
+      "new_key": "ac_input_voltage_v"
     },
     "ac_input_frequency": {
       "units": [
         "Hz"
       ],
       "new_key": "ac_input_frequency_hz"
+    },
+    "current": {
+      "units": [
+        "A"
+      ],
+      "new_key": "current_a"
+    },
+    "max_spin_speed_standard_programme": {
+      "units": [
+        "RPM"
+      ],
+      "new_key": "max_spin_speed_rpm"
     }
   },
   "cross_category_removals": {
     "specs": [
       "quick_wash",
-      "steam_refresh",
+      "delay_timer",
+      "delayed_start_timer",
+      "delay_end",
       "display",
-      "extra_rinse",
+      "built_in_display",
+      "steam_refresh",
+      "time_to_end_of_programme",
+      "child_lock",
+      "control_panel_lock",
       "delicates",
-      "hand_wash"
+      "wifi",
+      "wifi_connectivity",
+      "smart_connectivity",
+      "home_connect",
+      "hon_app",
+      "my_aeg_care_app",
+      "smartthings"
     ],
-    "features": [
-      "panel_safety_lock",
-      "start_end_delay",
-      "time_remaining_display",
-      "extra_rinse",
-      "delicates_or_handwash",
-      "digital_display",
-      "smart"
-    ]
+    "features": []
   }
 }
