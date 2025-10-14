@@ -15,13 +15,39 @@ def normalize_key(key: str) -> str:
     return key.lower().replace('_', '').replace('-', '').replace(' ', '')
 
 
-def extract_unit_from_value(value: str, units: List[str]) -> tuple[str, str]:
+def extract_unit_from_value(value: str, units: List[str], new_key: str = None) -> tuple[str, str]:
     """
     Extract numeric value and unit from string.
+    Automatically converts units when needed (e.g., mm → cm).
     Returns: (numeric_value, detected_unit)
     """
     value_str = str(value).strip()
 
+    # First, try to detect mm in the value (before checking expected units)
+    mm_pattern = r'\s*mm\s*'
+    if re.search(mm_pattern, value_str, re.IGNORECASE):
+        # Extract numeric value
+        numeric = re.sub(mm_pattern, '', value_str, flags=re.IGNORECASE).strip()
+
+        # Check if target key expects cm
+        if new_key and new_key.endswith('_cm'):
+            try:
+                # Convert mm to cm (divide by 10)
+                mm_value = float(numeric)
+                cm_value = mm_value / 10
+                # Format as integer if whole number, otherwise one decimal place
+                if cm_value == int(cm_value):
+                    return str(int(cm_value)), "cm"
+                else:
+                    return str(cm_value), "cm"
+            except (ValueError, TypeError):
+                # If conversion fails, return as-is
+                return numeric, "mm"
+        else:
+            # Target expects mm, return as-is
+            return numeric, "mm"
+
+    # Try expected units from the unification map
     for unit in units:
         # Try to find and remove the unit
         pattern = rf'\s*{re.escape(unit)}\s*'
@@ -72,8 +98,8 @@ def apply_unit_extractions(specs: dict, unit_extractions: dict) -> dict:
             new_key = extraction_rule['new_key']
             units = extraction_rule['units']
 
-            # Extract unit from value
-            numeric_value, detected_unit = extract_unit_from_value(value, units)
+            # Extract unit from value (pass new_key for unit conversion)
+            numeric_value, detected_unit = extract_unit_from_value(value, units, new_key)
             result[new_key] = numeric_value
         else:
             result[key] = value
