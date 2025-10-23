@@ -1,0 +1,90 @@
+1-"""
+2-Base Retailer Scraper
+3:Abstract base class that all retailer scrapers must inherit from
+4-"""
+5-
+6-from abc import ABC, abstractmethod
+7-from typing import Dict, List, Optional
+8-
+9-
+10:class RetailerScraper(ABC):
+11-    """
+12:    Abstract base class for all retailer scrapers.
+13:    Each retailer implementation must inherit from this class.
+14-    """
+15-
+16-    @property
+17-    @abstractmethod
+18-    def retailer_name(self) -> str:
+--
+29-    @property
+30-    @abstractmethod
+31-    def url_patterns(self) -> List[str]:
+32-        """
+33-        URL patterns/domains to match against retailer links.
+34:        Used for identifying which scraper to use for a given URL.
+35-
+36-        Examples: ['ao.com', 'ao.co.uk'] or ['markselectrical.co.uk']
+37-
+38-        Returns:
+39-            List[str]: List of URL patterns that identify this retailer
+40-        """
+41-        pass
+42-
+43-    @abstractmethod
+44:    async def scrape_product(self, page, url: str) -> Dict:
+45-        """
+46-        Scrape product specifications from retailer's product page.
+47-
+48-        Args:
+49-            page: Playwright page object
+50:            url: Product URL to scrape
+51-
+52-        Returns:
+53-            Dict: Product data with structure:
+54-                {
+55-                    'specs': {key: value, ...},  # Flattened specifications
+--
+75-        """
+76-        pass
+77-
+78-    def calculate_quality_score(self, specs: Dict) -> float:
+79-        """
+80:        Calculate quality/confidence score for scraped data.
+81-        Higher score = better data coverage.
+82-
+83-        Default implementation: simple spec count metric.
+84:        Override this in subclass for retailer-specific scoring.
+85-
+86-        Args:
+87:            specs: Dictionary of scraped specifications
+88-
+89-        Returns:
+90-            float: Quality score between 0.0 and 1.0
+91-        """
+92-        if not specs:
+--
+96-        spec_count = len(specs)
+97-        return min(spec_count / 50.0, 1.0)
+98-
+99-    def matches_url(self, url: str) -> bool:
+100-        """
+101:        Check if this scraper can handle the given URL.
+102-
+103-        Args:
+104-            url: URL to check
+105-
+106-        Returns:
+107:            bool: True if this scraper can handle the URL
+108-        """
+109-        url_lower = url.lower()
+110-        return any(pattern in url_lower for pattern in self.url_patterns)
+111-
+112-    def matches_name(self, name: str) -> bool:
+113-        """
+114:        Check if this scraper matches the given retailer name.
+115-
+116-        Args:
+117-            name: Retailer name to check
+118-
+119-        Returns:

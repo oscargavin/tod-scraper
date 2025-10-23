@@ -10,6 +10,37 @@ DEFAULT_KEY_ANALYSIS_FILE = "output/key_analysis.json"
 DEFAULT_UNIFICATION_MAP_FILE = "output/unification_map.json"
 DEFAULT_OUTPUT_FILE = "output/standardized_products.json"
 
+
+def get_pipeline_paths(input_file: str) -> dict:
+    """
+    Derive all pipeline file paths from an input file.
+
+    Args:
+        input_file: Path to input JSON file (e.g., "output/air-fryers_full.json")
+
+    Returns:
+        Dictionary with keys: input, key_analysis, unification_map, output
+
+    Example:
+        >>> get_pipeline_paths("output/air-fryers_full.json")
+        {
+            'input': 'output/air-fryers_full.json',
+            'key_analysis': 'output/air-fryers_full.key_analysis.json',
+            'unification_map': 'output/air-fryers_full.unification_map.json',
+            'output': 'output/air-fryers_full.standardized.json'
+        }
+    """
+    input_path = Path(input_file)
+    base_name = input_path.stem  # e.g., "air-fryers_full"
+    output_dir = input_path.parent  # e.g., "output"
+
+    return {
+        'input': str(input_path),
+        'key_analysis': str(output_dir / f"{base_name}.key_analysis.json"),
+        'unification_map': str(output_dir / f"{base_name}.unification_map.json"),
+        'output': str(output_dir / f"{base_name}.standardized.json"),
+    }
+
 # Dynamic unit detection patterns
 # Each pattern includes: suffix for the new key, regex pattern, and optional conversion function
 UNIT_PATTERNS = {

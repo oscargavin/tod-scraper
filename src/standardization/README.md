@@ -10,20 +10,34 @@ Two-phase LLM-powered system to standardize product specs/features from multiple
 - Phase 1: Analyze all keys and use Gemini 2.5 Flash to generate a unification map
 - Phase 2: Apply the map to create standardized data
 
+**Category-Agnostic Design:**
+- Works with **any product category** (washing machines, air fryers, TVs, etc.)
+- Automatically derives output filenames from input
+- No hardcoded category assumptions
+- AI adapts to each category's unique specs/features
+
 ## Quick Start
 
 ```bash
-# Run full pipeline
+# Run full pipeline on default file (complete_products.json)
 python -m src.standardization.cli
-# or
-python src/standardization/cli.py
+
+# Run on ANY category file (auto-derives output filenames)
+python -m src.standardization.cli --input output/air-fryers_full.json
 
 # With verbose output
-python -m src.standardization.cli --verbose
+python -m src.standardization.cli --input output/air-fryers_full.json --verbose
 
 # Force regeneration of unification map
 python -m src.standardization.cli --force-regenerate
 ```
+
+**Output files are automatically named based on input:**
+- Input: `output/air-fryers_full.json`
+- Generates:
+  - `output/air-fryers_full.key_analysis.json`
+  - `output/air-fryers_full.unification_map.json`
+  - `output/air-fryers_full.standardized.json`
 
 ## Architecture
 
@@ -85,24 +99,27 @@ from src.standardization import (
     standardize_products,
     validate_standardization
 )
+from src.standardization.config import get_pipeline_paths
 
-# Analyze keys
+# Option 1: Use get_pipeline_paths() for any category (RECOMMENDED)
+paths = get_pipeline_paths("output/air-fryers_full.json")
+
+analysis = collect_keys(paths['input'])
+unification_map = generate_unification_map(paths['key_analysis'], paths['unification_map'])
+summary = standardize_products(paths['input'], paths['unification_map'], paths['output'])
+results = validate_standardization(paths['output'])
+
+# Option 2: Manual file paths
 analysis = collect_keys("output/complete_products.json")
-
-# Generate map
 unification_map = generate_unification_map(
     "output/key_analysis.json",
     "output/unification_map.json"
 )
-
-# Apply standardization
 summary = standardize_products(
     "output/complete_products.json",
     "output/unification_map.json",
     "output/standardized_products.json"
 )
-
-# Validate results
 results = validate_standardization("output/standardized_products.json")
 ```
 

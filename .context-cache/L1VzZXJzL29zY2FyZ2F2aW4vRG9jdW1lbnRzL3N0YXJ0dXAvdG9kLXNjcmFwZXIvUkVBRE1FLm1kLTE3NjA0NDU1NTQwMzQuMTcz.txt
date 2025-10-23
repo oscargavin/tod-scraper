@@ -42,87 +42,60 @@ echo "SUPABASE_KEY=your_supabase_key" >> .env
 
 ### Basic Usage
 
-Scrape all products from a category with specifications, standardization, and metadata:
+Scrape all products from a category with specifications:
 ```bash
 python src/scrapers/which/complete_scraper.py --url "https://www.which.co.uk/reviews/air-fryers" --pages all
 ```
 
-### With Enrichment
+### With Retailer Enrichment
 
-Scrape and enrich with retailer specifications and customer reviews:
+Scrape and enrich with retailer specifications (e.g., AO.com):
 ```bash
 python src/scrapers/which/complete_scraper.py \
   --url "https://www.which.co.uk/reviews/washing-machines" \
   --pages all \
-  --enrich-retailers \
-  --enrich-reviews
+  --enrich-retailers
 ```
 
 ### Full Pipeline (Recommended)
 
-Run the complete 10-phase pipeline with database insertion:
+Run the complete pipeline with Which.com + AO reviews + Database insertion:
 ```bash
-python src/scrapers/which/complete_scraper.py \
+python scripts/run_full_pipeline.py \
   --url "https://www.which.co.uk/reviews/washing-machines" \
   --pages all \
-  --enrich-retailers \
-  --enrich-reviews \
-  --save-to-db
+  --insert-db \
+  --generate-metadata
 ```
 
 ### Command Line Options
 
-#### Core Options
 | Option | Short | Default | Description |
 |--------|-------|---------|-------------|
 | `--url` | `-u` | washing-machines | Which.com category URL to scrape |
 | `--pages` | `-p` | 1 | Number of pages (`1-99` or `all`) |
+| `--workers` | `-w` | 3 | Parallel workers for spec extraction (1-10) |
+| `--skip-specs` | `-s` | False | Only get products, skip specifications |
+| `--skip-retailers` | `-r` | False | Skip retailer link extraction |
+| `--enrich-retailers` | `-e` | False | Enrich with retailer specifications |
+| `--retailer-workers` | | 3 | Parallel workers for retailer enrichment (1-10) |
+| `--download-images` | `-d` | False | Download and upload images to Supabase |
 | `--output` | `-o` | complete_products.json | Output filename |
-| `--skip-specs` | `-s` | False | Skip Phase 2 (only get product listings) |
-
-#### Enrichment Phases (opt-in)
-| Option | Short | Default | Description |
-|--------|-------|---------|-------------|
-| `--enrich-retailers` | `-e` | False | Phase 4-5: Enrich with retailer specs and PDFs |
-| `--enrich-reviews` | | False | Phase 6: Enrich with customer reviews |
-| `--enrich-ai` | | False | Phase 7: Use AI (Gemini) to fill missing specs |
-
-#### Processing Options (enabled by default)
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--no-standardization` | False | Skip Phase 8: data standardization |
-| `--no-metadata` | False | Skip Phase 9: metadata generation |
-
-#### Output Destinations
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--save-to-db` | False | Phase 10: Insert to Supabase database |
-| `--download-images` | False | Download and upload images to Supabase |
-| `--storage-bucket` | product-images | Supabase storage bucket name |
-
-#### Performance Tuning
-| Option | Short | Default | Description |
-|--------|-------|---------|-------------|
-| `--workers` | `-w` | 3 | Workers for spec extraction |
-| `--retailer-workers` | | 3 | Workers for retailer enrichment |
-| `--review-workers` | | 3 | Workers for review enrichment |
-| `--ai-workers` | | 2 | Workers for AI (Gemini) enrichment |
 
 ### Examples
 
-**Full pipeline with all enrichment and database insertion**:
+**Full pipeline with retailer enrichment**:
 ```bash
 python src/scrapers/which/complete_scraper.py \
   --url "https://www.which.co.uk/reviews/washing-machines" \
   --pages all \
+  --workers 5 \
   --enrich-retailers \
-  --enrich-reviews \
-  --enrich-ai \
-  --save-to-db \
+  --retailer-workers 3 \
   --output washing_machines_full.json
 ```
 
-**Basic scraping with standardization** (default):
+**Scrape all air fryers with 5 workers**:
 ```bash
 python src/scrapers/which/complete_scraper.py \
   --url "https://www.which.co.uk/reviews/air-fryers" \
@@ -131,33 +104,21 @@ python src/scrapers/which/complete_scraper.py \
   --output air_fryers.json
 ```
 
-**Fast mode: products only, no processing**:
+**Get first 3 pages of TVs (products only)**:
 ```bash
 python src/scrapers/which/complete_scraper.py \
   --url "https://www.which.co.uk/reviews/tvs" \
   --pages 3 \
   --skip-specs \
-  --no-metadata \
   --output tvs_quick.json
 ```
 
-**With image download and retailer enrichment**:
+**With image download to Supabase**:
 ```bash
 python src/scrapers/which/complete_scraper.py \
   --url "https://www.which.co.uk/reviews/coffee-machines" \
-  --pages all \
-  --enrich-retailers \
-  --download-images \
-  --save-to-db
-```
-
-**Raw data only (no standardization or metadata)**:
-```bash
-python src/scrapers/which/complete_scraper.py \
-  --url "https://www.which.co.uk/reviews/laptops" \
   --pages 2 \
-  --no-standardization \
-  --no-metadata
+  --download-images
 ```
 
 ## Supported Categories
@@ -312,36 +273,33 @@ That's it! The orchestrator handles everything else automatically.
 
 ### Optimization Tips
 
-1. **More Workers**: Increase `--workers`, `--retailer-workers`, etc. for faster processing
-2. **Skip What You Don't Need**: Use `--skip-specs`, `--no-standardization`, or `--no-metadata`
+1. **More Workers**: Increase `--workers` and `--retailer-workers` for faster processing
+2. **Skip What You Don't Need**: Use `--skip-specs` or `--skip-retailers` to speed up
 3. **Specific Pages**: Limit pages instead of using `all` for testing
-4. **Selective Enrichment**: Only enable the enrichment phases you need
+4. **Parallel Retailers**: Set `"parallel_scraping": true` in config (experimental)
 
 ## How It Works
 
-The scraper operates in 10 sequential phases:
+The scraper operates in three phases:
 
-### Data Collection (Phases 1-7)
-
-**Phase 1: Product Discovery**
-- Navigates to Which.com category URL
+### Phase 1: Product Discovery
+- Navigates to the Which.com category URL
 - Detects total pages automatically
 - Extracts product names, prices, and URLs
+- Extracts retailer links from "Where to buy" sections
 - Removes duplicates
 
-**Phase 2: Base Specification Extraction**
+### Phase 2: Which.com Specification Extraction
 - Distributes products evenly among workers
 - Each worker maintains a persistent browser context
-- Extracts specifications and features tables from Which.com
-- Extracts retailer links from "Where to buy" sections
+- Navigates to individual product pages
+- Extracts specifications and features tables
+- Extracts retailer prices and links
 - Optionally downloads and uploads product images
+- Returns structured data
 
-**Phase 3: Retailer Link Discovery**
-- For products without Which.com retailer links
-- Searches DuckDuckGo to find retailer URLs
-- Extracts up to 5 retailer links per product
-
-**Phase 4: Retailer Spec Enrichment** (opt-in with `--enrich-retailers`)
+### Phase 3: Retailer Enrichment (Optional)
+- Filters products with retailer links
 - Orchestrator selects best retailer per product based on:
   - Availability in retailer links
   - Priority order from config
@@ -349,39 +307,7 @@ The scraper operates in 10 sequential phases:
 - Parallel workers scrape retailer pages
 - Extracts retailer-specific specifications
 - Merges retailer specs with Which.com specs
-
-**Phase 5: PDF Spec Enrichment** (automatic with `--enrich-retailers`)
-- For products where retailer enrichment failed
-- Extracts manufacturer PDF specifications
-- Fills gaps in product data
-
-**Phase 6: Review Enrichment** (opt-in with `--enrich-reviews`)
-- Scrapes customer reviews from AO, Boots, or Amazon
-- Extracts ratings, review counts, and sentiment
-- Adds TOD score (Bayesian weighted rating)
-
-**Phase 7: AI Spec Enrichment** (opt-in with `--enrich-ai`)
-- Uses Gemini AI as final fallback
-- Fills remaining missing specifications
-- Only runs for products still missing data
-
-### Data Processing & Persistence (Phases 8-10)
-
-**Phase 8: Data Standardization** (runs by default)
-- Cleans and unifies field names across sources
-- Converts units to standard formats
-- Removes duplicate/redundant fields
-- Generates `.standardized.json` output
-
-**Phase 9: Metadata Generation** (runs by default)
-- Extracts all unique values for each field
-- Creates searchable metadata for filtering
-- Generates `.metadata.json` output
-
-**Phase 10: Database Insertion** (opt-in with `--save-to-db`)
-- Inserts products to Supabase database
-- Inserts metadata for search/filtering
-- Tracks insertion statistics
+- Tracks enrichment source and quality
 
 ## Project Structure
 
@@ -455,7 +381,7 @@ tod-scraper/
 **No retailer enrichment**:
 - Ensure `--enrich-retailers` flag is set
 - Check that retailer is enabled in `config/retailer_config.json`
-- Verify retailer links exist (Phase 3 should extract them automatically)
+- Verify retailer links exist in Which.com data (don't use `--skip-retailers`)
 
 **Memory issues**:
 - Reduce workers to 3 or less

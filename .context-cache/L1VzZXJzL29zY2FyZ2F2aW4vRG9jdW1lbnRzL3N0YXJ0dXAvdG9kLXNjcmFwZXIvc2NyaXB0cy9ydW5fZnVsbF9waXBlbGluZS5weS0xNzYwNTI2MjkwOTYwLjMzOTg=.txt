@@ -1,0 +1,127 @@
+11-import sys
+12-import time
+13-from pathlib import Path
+14-from typing import Dict, List, Optional, Tuple
+15-
+16:# Import the main functions from both scrapers
+17:from src.scrapers.which.complete_scraper import scrape_products_phase, enrich_specs_phase
+18-from src.reviews.ao.enricher import (
+19-    worker_process_chunk,
+20-    process_product
+21-)
+22-
+--
+27-
+28-from playwright.async_api import async_playwright
+29-from playwright_stealth import Stealth
+30-
+31-# Import retailer enrichment orchestrator
+32:from src.scrapers.retailers.orchestrator import RetailerEnrichmentOrchestrator
+33-
+34-
+35-async def worker_retailer_enrich_chunk(
+36-    worker_id: int,
+37-    products_chunk: List[Dict],
+--
+91-
+92-    Args:
+93-        browser: Playwright browser instance
+94-        products: List of product dictionaries
+95-        workers: Number of parallel workers (default: 3)
+96:        category: Product category (e.g., 'air-fryers', 'washing-machines')
+97-
+98-    Returns:
+99-        Tuple of (enriched_products, stats)
+100-    """
+101-    print("="*60)
+--
+109-    orchestrator = RetailerEnrichmentOrchestrator()
+110-    orchestrator_stats = orchestrator.get_stats()
+111-
+112-    total = len(products)
+113-    print(f"Enriching {total} products with {workers} workers...")
+114:    print(f"Enabled scrapers: {orchestrator_stats['enabled_scrapers']}/{orchestrator_stats['registered_scrapers']}")
+115-    if category:
+116-        print(f"Category: {category}")
+117-
+118-    start_time = time.time()
+119-
+--
+173-    
+174-    Args:
+175-        products: List of product dictionaries
+176-        workers: Number of parallel workers
+177-        extract_sentiment: Whether to extract sentiment analysis
+178:        category: Product category (e.g., 'washing-machines', 'built-in-ovens')
+179-    """
+180-    print("="*60)
+181-    print("PHASE 3: AO.com Review Enrichment")
+182-    print("="*60)
+183-    
+--
+279-        'globalAverage': global_avg,
+280-        'totalReviews': total_reviews
+281-    }
+282-
+283-
+284:async def main(url: str, pages, workers: int, skip_specs: bool, skip_reviews: bool,
+285-               review_workers: int, output_file: str, download_images: bool = False,
+286-               insert_db: bool = False, generate_metadata: bool = False,
+287-               skip_standardization: bool = False, skip_retailer_enrichment: bool = False):
+288-    """Main pipeline coordinator"""
+289-    print(f"\n{'='*60}")
+--
+580-        print(f"✓ Products inserted to DB: {db_stats['inserted']}/{db_stats['total']} ({data_type} data)")
+581-        if metadata_success:
+582-            print(f"✓ Metadata generated and inserted for category: {category}")
+583-
+584-
+585:if __name__ == '__main__':
+586-    parser = argparse.ArgumentParser(
+587-        description='Full Scraping Pipeline: Which.com + AO.com Reviews',
+588-        formatter_class=argparse.RawDescriptionHelpFormatter,
+589-        epilog="""
+590-Examples:
+591-  # Full pipeline with standardization, DB insertion, and metadata
+592-  python full_pipeline.py --url "https://www.which.co.uk/reviews/air-fryers" --pages 2 --insert-db --generate-metadata
+593-
+594-  # Full pipeline with all features (recommended)
+595:  python full_pipeline.py --url "https://www.which.co.uk/reviews/washing-machines" --pages all --insert-db --generate-metadata
+596-
+597-  # Skip reviews (Which.com only with standardization)
+598-  python full_pipeline.py --url "https://www.which.co.uk/reviews/tvs" --pages 1 --skip-reviews
+599-
+600-  # Skip standardization (not recommended for DB insertion)
+601-  python full_pipeline.py --url "https://www.which.co.uk/reviews/coffee-machines" --pages 1 --skip-standardization
+602-
+603-  # Maximum parallelization with standardization and DB
+604:  python full_pipeline.py --url "https://www.which.co.uk/reviews/washing-machines" --pages all --workers 5 --review-workers 5 --insert-db
+605-
+606-  # Just product listings (no specs, no reviews, no standardization)
+607-  python full_pipeline.py --url "https://www.which.co.uk/reviews/laptops" --pages 3 --skip-specs --skip-reviews
+608-
+609-  # Complete pipeline with images, standardization, and database
+--
+613-      The database will receive standardized data for better consistency and quality.
+614-        """
+615-    )
+616-    
+617-    parser.add_argument('--url', '-u', 
+618:                       default='https://www.which.co.uk/reviews/washing-machines',
+619-                       help='Which.com category URL to scrape')
+620-    parser.add_argument('--pages', '-p', 
+621-                       default='1',
+622-                       help='Number of pages to scrape or "all" for all pages')
+623-    parser.add_argument('--workers', '-w', 
+--
+667-    if args.generate_metadata and not args.insert_db:
+668-        print("Error: --generate-metadata requires --insert-db")
+669-        sys.exit(1)
+670-    
+671-    # Run the pipeline
+672:    asyncio.run(main(
+673-        url=args.url,
+674-        pages=pages_arg,
+675-        workers=args.workers,
+676-        skip_specs=args.skip_specs,
+677-        skip_reviews=args.skip_reviews,

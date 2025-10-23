@@ -1,0 +1,226 @@
+1-"""
+2-Retailer Enrichment Orchestrator
+3:Intelligently selects and executes retailer scrapers to enrich product data
+4-"""
+5-
+6-import json
+7-import asyncio
+8-from pathlib import Path
+9-from typing import Dict, List, Optional, Tuple
+10-
+11-from src.utils.url_resolver import resolve_tracking_url
+12:from src.scrapers.retailers.registry import RetailerScraperRegistry
+13:from src.scrapers.retailers.base import RetailerScraper
+14:from src.scrapers.retailers.ao_scraper import AOScraper
+15:from src.scrapers.retailers.appliance_centre_scraper import ApplianceCentreScraper
+16:from src.scrapers.retailers.marks_electrical_scraper import MarksElectricalScraper
+17:from src.scrapers.retailers.boots_scraper import BootsScraper
+18:from src.scrapers.retailers.appliances_direct_scraper import AppliancesDirectScraper
+19:from src.scrapers.retailers.amazon_scraper import AmazonScraper
+20-
+21-
+22-class RetailerEnrichmentOrchestrator:
+23-    """
+24-    Coordinates retailer scraping to maximize data coverage.
+--
+37-        Args:
+38-            config_path: Path to retailer configuration JSON file
+39-        """
+40-        self.registry = RetailerScraperRegistry()
+41-        self.config = self._load_config(config_path)
+42:        self._register_all_scrapers()
+43-
+44-    def _load_config(self, config_path: str) -> Dict:
+45-        """Load configuration from JSON file"""
+46-        try:
+47-            with open(config_path, 'r') as f:
+--
+59-            'priority_order': ['AO', 'Appliance Centre'],
+60-            'fallback_enabled': True,
+61-            'max_fallback_attempts': 2,
+62-            'min_specs_threshold': 5,
+63-            'stop_at_first_success': True,
+64:            'scrapers': {
+65-                'AO': {'enabled': True, 'expected_spec_count': 50},
+66-                'Appliance Centre': {'enabled': True, 'expected_spec_count': 50}
+67-            }
+68-        }
+69-
+70:    def _register_all_scrapers(self) -> None:
+71-        """
+72:        Register all available retailer scrapers.
+73-
+74:        Add new scrapers here as they are implemented.
+75-        """
+76:        # Register AO scraper
+77-        self.registry.register(AOScraper())
+78-
+79:        # Register Appliance Centre scraper
+80-        self.registry.register(ApplianceCentreScraper())
+81-
+82:        # Register Marks Electrical scraper
+83-        self.registry.register(MarksElectricalScraper())
+84-
+85:        # Register Boots Kitchen Appliances scraper
+86-        self.registry.register(BootsScraper())
+87-
+88:        # Register Appliances Direct scraper
+89-        self.registry.register(AppliancesDirectScraper())
+90-
+91:        # Register Amazon scraper
+92-        self.registry.register(AmazonScraper())
+93-
+94:        # Future scrapers will be added here:
+95:        # Very scraper archived due to aggressive anti-bot protection (HTTP2 errors)
+96-        # self.registry.register(CurrysScraper())
+97-        # etc.
+98-
+99-    async def enrich_product(self, product: Dict, page) -> Tuple[Dict, Dict]:
+100-        """
+--
+121-                'attempted': False,
+122-                'success': False,
+123-                'reason': 'No retailer links available'
+124-            }
+125-
+126:        # Find available scrapers for this product
+127:        available_scrapers = self._find_available_scrapers(retailer_links)
+128-
+129:        if not available_scrapers:
+130-            return product, {
+131-                'attempted': False,
+132-                'success': False,
+133:                'reason': 'No enabled scrapers available for retailer links'
+134-            }
+135-
+136:        # Try scrapers in order
+137-        best_result = None
+138-        best_score = 0.0
+139-        attempts = []
+140-
+141:        for scraper, url in available_scrapers:
+142:            # Try this scraper
+143:            result = await self._try_scraper(scraper, url, page)
+144-            attempts.append({
+145:                'retailer': scraper.retailer_name,
+146-                'success': result['success'],
+147-                'spec_count': len(result['specs'])
+148-            })
+149-
+150-            if result['success']:
+151:                score = scraper.calculate_quality_score(result['specs'])
+152-
+153-                # Check if this is better than current best
+154-                if score > best_score:
+155-                    best_result = result
+156-                    best_score = score
+--
+190-            }
+191-        else:
+192-            return product, {
+193-                'attempted': True,
+194-                'success': False,
+195:                'reason': 'All scrapers failed or returned insufficient data',
+196-                'attempts': attempts
+197-            }
+198-
+199:    async def _try_scraper(self, scraper: RetailerScraper, url: str, page) -> Dict:
+200-        """
+201:        Try to scrape a product using the given scraper.
+202-
+203-        Args:
+204:            scraper: RetailerScraper instance
+205-            url: Product URL (may be tracking URL)
+206-            page: Playwright page object
+207-
+208-        Returns:
+209-            Dict with scraping result
+--
+227-                        'retailerUrl': url,
+228-                        'error': 'Failed to resolve tracking redirect chain'
+229-                    }
+230-
+231-            # Clean URL before navigation (remove tracking params like ?tag=which1-21&linkCode=...)
+232:            clean_url = scraper.clean_url(url)
+233-
+234-            # Navigate to clean URL
+235-            # Use 'domcontentloaded' for Amazon (cookie banners can block networkidle)
+236:            wait_strategy = 'domcontentloaded' if scraper.retailer_name == 'Amazon' else 'networkidle'
+237-            await page.goto(clean_url, wait_until=wait_strategy, timeout=60000)
+238-
+239-            # Check if we actually ended up on the retailer's product page
+240-            current_url = page.url
+241:            if not scraper.matches_url(current_url):
+242-                return {
+243-                    'success': False,
+244-                    'specs': {},
+245-                    'retailerUrl': url,
+246:                    'error': f'Redirect did not lead to {scraper.retailer_name} product page'
+247-                }
+248-
+249-            # Scrape the product
+250:            result = await scraper.scrape_product(page, current_url)
+251:            result['source'] = scraper.retailer_name
+252-
+253-            # Validate result meets minimum threshold
+254-            spec_count = len(result.get('specs', {}))
+255-            min_threshold = self.config.get('min_specs_threshold', 20)
+256-
+--
+266-                'specs': {},
+267-                'retailerUrl': url,
+268-                'error': f'Exception during scraping: {str(e)[:100]}'
+269-            }
+270-
+271:    def _find_available_scrapers(self, retailer_links: List[Dict]) -> List[Tuple[RetailerScraper, str]]:
+272-        """
+273:        Find available and enabled scrapers for the given retailer links.
+274-
+275-        Args:
+276-            retailer_links: List of retailer link dicts from Which.com
+277-
+278-        Returns:
+279:            List of (scraper, url) tuples, sorted by priority
+280-        """
+281-        available = []
+282-
+283-        for link in retailer_links:
+284:            # Find scraper for this link
+285:            scraper = self.registry.find_scraper_for_retailer_link(link)
+286-
+287:            if scraper:
+288:                # Check if scraper is enabled in config
+289:                scraper_config = self.config.get('scrapers', {}).get(scraper.retailer_name, {})
+290-
+291:                if scraper_config.get('enabled', False):
+292-                    url = link.get('url', '')
+293-                    if url:
+294:                        available.append((scraper, url))
+295-
+296-        # Sort by priority order from config
+297-        priority_order = self.config.get('priority_order', [])
+298-        available.sort(key=lambda x: self._get_priority(x[0].retailer_name, priority_order))
+299-
+--
+322-
+323-        Returns:
+324-            Dict with orchestrator stats
+325-        """
+326-        return {
+327:            'registered_scrapers': self.registry.count(),
+328:            'enabled_scrapers': sum(
+329-                1 for name in self.registry.get_retailer_names()
+330:                if self.config.get('scrapers', {}).get(name, {}).get('enabled', False)
+331-            ),
+332:            'scrapers': self.registry.get_retailer_names(),
+333-            'config': {
+334-                'priority_order': self.config.get('priority_order', []),
+335-                'fallback_enabled': self.config.get('fallback_enabled', True),
+336-                'max_fallback_attempts': self.config.get('max_fallback_attempts', 2)
+337-            }
+338-        }
+339-
+340-    def __repr__(self) -> str:
+341-        """String representation"""
+342-        stats = self.get_stats()
+343:        return f"RetailerEnrichmentOrchestrator({stats['enabled_scrapers']}/{stats['registered_scrapers']} scrapers enabled)"

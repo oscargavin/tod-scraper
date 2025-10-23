@@ -1,0 +1,300 @@
+77-        "width": "30cm",
+78-        "depth": "25cm",
+79-        "weight": "4.242kg",
+80-        "cable_length": "91cm"
+81-      },
+82:      "features": {
+83-        "number_of_cooking_zones": "Single",
+84-        "smart_controls": "No",
+85-        "spoon_for_measuring": "No",
+86-        "hinged_lid": "No",
+87-        "detachable_lid": "Yes",
+--
+112-        "width": "41cm",
+113-        "depth": "45cm",
+114-        "weight": "8.78kg",
+115-        "cable_length": "96cm"
+116-      },
+117:      "features": {
+118-        "number_of_cooking_zones": "Dual",
+119-        "smart_controls": "No",
+120-        "spoon_for_measuring": "No",
+121-        "hinged_lid": "No",
+122-        "detachable_lid": "No",
+--
+177-        "width": "26cm",
+178-        "depth": "46cm",
+179-        "weight": "7.91kg",
+180-        "cable_length": "85cm"
+181-      },
+182:      "features": {
+183-        "number_of_cooking_zones": "Dual",
+184-        "smart_controls": "No",
+185-        "spoon_for_measuring": "No",
+186-        "hinged_lid": "No",
+187-        "detachable_lid": "No",
+--
+217-        "width": "39cm",
+218-        "depth": "40cm",
+219-        "weight": "7.224kg",
+220-        "cable_length": "75cm"
+221-      },
+222:      "features": {
+223-        "number_of_cooking_zones": "Dual",
+224-        "smart_controls": "No",
+225-        "spoon_for_measuring": "No",
+226-        "hinged_lid": "No",
+227-        "detachable_lid": "No",
+--
+252-        "width": "44cm",
+253-        "depth": "39cm",
+254-        "weight": "8.992kg",
+255-        "cable_length": "97cm"
+256-      },
+257:      "features": {
+258-        "number_of_cooking_zones": "Dual",
+259-        "smart_controls": "No",
+260-        "spoon_for_measuring": "No",
+261-        "hinged_lid": "No",
+262-        "detachable_lid": "No",
+--
+313-        "width": "41cm",
+314-        "depth": "38cm",
+315-        "weight": "7.94kg",
+316-        "cable_length": "83cm"
+317-      },
+318:      "features": {
+319-        "number_of_cooking_zones": "Dual",
+320-        "smart_controls": "No",
+321-        "spoon_for_measuring": "No",
+322-        "hinged_lid": "No",
+323-        "detachable_lid": "No",
+--
+354-        "width": "45cm",
+355-        "depth": "38cm",
+356-        "weight": "9.22kg",
+357-        "cable_length": "100cm"
+358-      },
+359:      "features": {
+360-        "number_of_cooking_zones": "Dual",
+361-        "smart_controls": "No",
+362-        "spoon_for_measuring": "No",
+363-        "hinged_lid": "No",
+364-        "detachable_lid": "No",
+--
+390-        "width": "52cm",
+391-        "depth": "34cm",
+392-        "weight": "9.27kg",
+393-        "cable_length": "100cm"
+394-      },
+395:      "features": {
+396-        "number_of_cooking_zones": "Dual",
+397-        "smart_controls": "No",
+398-        "spoon_for_measuring": "No",
+399-        "hinged_lid": "No",
+400-        "detachable_lid": "No",
+--
+441-        "width": "39cm",
+442-        "depth": "40cm",
+443-        "weight": "7.39kg",
+444-        "cable_length": "102cm"
+445-      },
+446:      "features": {
+447-        "number_of_cooking_zones": "Dual",
+448-        "smart_controls": "No",
+449-        "spoon_for_measuring": "No",
+450-        "hinged_lid": "No",
+451-        "detachable_lid": "No",
+--
+471-        "width": "44cm",
+472-        "depth": "37cm",
+473-        "weight": "7.42kg",
+474-        "cable_length": "78cm"
+475-      },
+476:      "features": {
+477-        "number_of_cooking_zones": "Dual",
+478-        "smart_controls": "No",
+479-        "spoon_for_measuring": "No",
+480-        "hinged_lid": "No",
+481-        "detachable_lid": "No",
+--
+511-        "width": "34cm",
+512-        "depth": "46cm",
+513-        "weight": "5.91kg",
+514-        "cable_length": "97cm"
+515-      },
+516:      "features": {
+517-        "number_of_cooking_zones": "Single",
+518-        "smart_controls": "No",
+519-        "spoon_for_measuring": "No",
+520-        "hinged_lid": "No",
+521-        "detachable_lid": "No",
+--
+571-        "width": "31cm",
+572-        "depth": "41cm",
+573-        "weight": "4.08kg",
+574-        "cable_length": "80cm"
+575-      },
+576:      "features": {
+577-        "number_of_cooking_zones": "Single",
+578-        "smart_controls": "No",
+579-        "spoon_for_measuring": "No",
+580-        "hinged_lid": "No",
+581-        "detachable_lid": "No",
+--
+641-        "width": "33cm",
+642-        "depth": "44cm",
+643-        "weight": "8.94kg",
+644-        "cable_length": "80cm"
+645-      },
+646:      "features": {
+647-        "number_of_cooking_zones": "Dual",
+648-        "smart_controls": "No",
+649-        "spoon_for_measuring": "No",
+650-        "hinged_lid": "Yes",
+651-        "detachable_lid": "No",
+--
+681-        "width": "40cm",
+682-        "depth": "35cm",
+683-        "weight": "4.94kg",
+684-        "cable_length": "78cm"
+685-      },
+686:      "features": {
+687-        "number_of_cooking_zones": "Single",
+688-        "smart_controls": "No",
+689-        "spoon_for_measuring": "No",
+690-        "hinged_lid": "No",
+691-        "detachable_lid": "No",
+--
+710-        "width": "28cm",
+711-        "depth": "40cm",
+712-        "weight": "3.84kg",
+713-        "cable_length": "82cm"
+714-      },
+715:      "features": {
+716-        "number_of_cooking_zones": "Single",
+717-        "smart_controls": "No",
+718-        "spoon_for_measuring": "No",
+719-        "hinged_lid": "No",
+720-        "detachable_lid": "No",
+--
+739-        "width": "32cm",
+740-        "depth": "39cm",
+741-        "weight": "4.76kg",
+742-        "cable_length": "64cm"
+743-      },
+744:      "features": {
+745-        "number_of_cooking_zones": "Single",
+746-        "smart_controls": "No",
+747-        "spoon_for_measuring": "No",
+748-        "hinged_lid": "No",
+749-        "detachable_lid": "No",
+--
+804-        "width": "31cm",
+805-        "depth": "41cm",
+806-        "weight": "4.08kg",
+807-        "cable_length": "80cm"
+808-      },
+809:      "features": {
+810-        "number_of_cooking_zones": "Single",
+811-        "smart_controls": "No",
+812-        "spoon_for_measuring": "No",
+813-        "hinged_lid": "No",
+814-        "detachable_lid": "No",
+--
+919-        "width": "29cm",
+920-        "depth": "49cm",
+921-        "weight": "10.03kg",
+922-        "cable_length": "75cm"
+923-      },
+924:      "features": {
+925-        "number_of_cooking_zones": "Dual",
+926-        "smart_controls": "No",
+927-        "spoon_for_measuring": "No",
+928-        "hinged_lid": "No",
+929-        "detachable_lid": "No",
+--
+1024-        "width": "29cm",
+1025-        "depth": "38cm",
+1026-        "weight": "4.8kg",
+1027-        "cable_length": "79cm"
+1028-      },
+1029:      "features": {
+1030-        "number_of_cooking_zones": "Single",
+1031-        "smart_controls": "No",
+1032-        "spoon_for_measuring": "No",
+1033-        "hinged_lid": "No",
+1034-        "detachable_lid": "No",
+--
+1064-        "width": "42cm",
+1065-        "depth": "38cm",
+1066-        "weight": "7.49kg",
+1067-        "cable_length": "75cm"
+1068-      },
+1069:      "features": {
+1070-        "number_of_cooking_zones": "Dual",
+1071-        "smart_controls": "No",
+1072-        "spoon_for_measuring": "No",
+1073-        "hinged_lid": "Yes",
+1074-        "detachable_lid": "Yes",
+--
+1119-        "width": "36cm",
+1120-        "depth": "35cm",
+1121-        "weight": "5.8kg",
+1122-        "cable_length": "98cm"
+1123-      },
+1124:      "features": {
+1125-        "number_of_cooking_zones": "Dual",
+1126-        "smart_controls": "No",
+1127-        "spoon_for_measuring": "No",
+1128-        "hinged_lid": "No",
+1129-        "detachable_lid": "No",
+--
+1179-        "width": "40cm",
+1180-        "depth": "43cm",
+1181-        "weight": "8.37kg",
+1182-        "cable_length": "98cm"
+1183-      },
+1184:      "features": {
+1185-        "number_of_cooking_zones": "Dual",
+1186-        "smart_controls": "No",
+1187-        "spoon_for_measuring": "No",
+1188-        "hinged_lid": "No",
+1189-        "detachable_lid": "No",
+--
+1214-        "width": "45cm",
+1215-        "depth": "39cm",
+1216-        "weight": "7.98kg",
+1217-        "cable_length": "75cm"
+1218-      },
+1219:      "features": {
+1220-        "number_of_cooking_zones": "Dual",
+1221-        "smart_controls": "No",
+1222-        "spoon_for_measuring": "No",
+1223-        "hinged_lid": "No",
+1224-        "detachable_lid": "No",
+--
+1254-        "width": "32cm",
+1255-        "depth": "42cm",
+1256-        "weight": "6.28kg",
+1257-        "cable_length": "105cm"
+1258-      },
+1259:      "features": {
+1260-        "number_of_cooking_zones": "Single",
+1261-        "smart_controls": "No",
+1262-        "spoon_for_measuring": "No",
+1263-        "hinged_lid": "No",
+1264-        "detachable_lid": "No",
+--
+1294-        "width": "27cm",
+1295-        "depth": "47cm",
+1296-        "weight": "5.28kg",
+1297-        "cable_length": "103cm"
+1298-      },
+1299:      "features": {
+1300-        "number_of_cooking_zones": "Single",
+1301-        "smart_controls": "No",
+1302-        "spoon_for_measuring": "No",
+1303-        "hinged_lid": "No",
+1304-        "detachable_lid": "No",
+--

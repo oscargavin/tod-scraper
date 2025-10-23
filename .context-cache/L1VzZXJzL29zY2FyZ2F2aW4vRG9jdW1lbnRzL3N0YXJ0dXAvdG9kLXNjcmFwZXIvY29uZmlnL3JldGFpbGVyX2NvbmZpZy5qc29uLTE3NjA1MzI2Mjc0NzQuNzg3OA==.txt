@@ -1,0 +1,87 @@
+{
+  "priority_order": [
+    "AO",
+    "Amazon",
+    "Marks Electrical",
+    "Boots Kitchen Appliances",
+    "Appliances Direct",
+    "Appliance Centre",
+    "Currys",
+    "John Lewis",
+    "Argos"
+  ],
+  "fallback_enabled": true,
+  "max_fallback_attempts": 2,
+  "min_specs_threshold": 5,
+  "stop_at_first_success": true,
+  "parallel_scraping": false,
+  "scrapers": {
+    "AO": {
+      "enabled": true,
+      "expected_spec_count": 50,
+      "quality_weight": 1.0,
+      "timeout_ms": 60000
+    },
+    "Amazon": {
+      "enabled": false,
+      "expected_spec_count": 20,
+      "quality_weight": 0.85,
+      "timeout_ms": 60000,
+      "comment": "Test mode - enable after verifying anti-bot bypasses work"
+    },
+    "Appliance Centre": {
+      "enabled": true,
+      "expected_spec_count": 50,
+      "quality_weight": 0.95,
+      "timeout_ms": 60000
+    },
+    "Marks Electrical": {
+      "enabled": true,
+      "expected_spec_count": 55,
+      "quality_weight": 0.9,
+      "timeout_ms": 60000
+    },
+    "Boots Kitchen Appliances": {
+      "enabled": true,
+      "expected_spec_count": 50,
+      "quality_weight": 0.9,
+      "timeout_ms": 60000
+    },
+    "Appliances Direct": {
+      "enabled": true,
+      "expected_spec_count": 23,
+      "quality_weight": 0.9,
+      "timeout_ms": 60000
+    },
+    "Currys": {
+      "enabled": false,
+      "expected_spec_count": 40,
+      "quality_weight": 0.85,
+      "timeout_ms": 60000,
+      "comment": "Not yet implemented"
+    },
+    "John Lewis": {
+      "enabled": false,
+      "expected_spec_count": 45,
+      "quality_weight": 0.95,
+      "timeout_ms": 60000,
+      "comment": "Not yet implemented"
+    },
+    "Argos": {
+      "enabled": false,
+      "expected_spec_count": 30,
+      "quality_weight": 0.8,
+      "timeout_ms": 60000,
+      "comment": "Not yet implemented"
+    }
+  },
+  "comments": {
+    "priority_order": "Order in which to try retailers (highest priority first)",
+    "fallback_enabled": "If true, try next retailer if current one fails",
+    "max_fallback_attempts": "Maximum number of retailers to try (after primary)",
+    "min_specs_threshold": "Minimum number of specs required for 'success'. Set to 5 (not 20) because Which.com averages only 17.7 specs - we want to capture all valuable retailer data. Standardization handles quality control.",
+    "stop_at_first_success": "If true, stop at first successful scrape. If false, try all and pick best",
+    "parallel_scraping": "If true and stop_at_first_success=false, scrape multiple retailers in parallel",
+    "quality_weight": "Multiplier for quality score (higher = prioritize this retailer's data)"
+  }
+}

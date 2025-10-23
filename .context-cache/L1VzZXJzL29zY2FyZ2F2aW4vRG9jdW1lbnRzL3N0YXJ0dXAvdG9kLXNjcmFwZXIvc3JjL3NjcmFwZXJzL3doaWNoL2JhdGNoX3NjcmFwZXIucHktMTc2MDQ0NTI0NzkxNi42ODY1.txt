@@ -1,0 +1,128 @@
+1-#!/usr/bin/env python3
+2-"""
+3:Batch scraper for all Which.com categories
+4-Scrapes specs and features for all categories and generates metadata
+5-"""
+6-import subprocess
+7-import json
+8-import os
+--
+10-from datetime import datetime
+11-from pathlib import Path
+12-
+13-# All categories from the database
+14-CATEGORIES = [
+15:    {"id": 1, "name": "Washing Machines", "slug": "washing-machines"},
+16-    {"id": 2, "name": "Dishwashers", "slug": "dishwashers"},
+17-    {"id": 3, "name": "Air Fryers", "slug": "air-fryers"},
+18-    {"id": 4, "name": "Fridge Freezers", "slug": "fridge-freezers"},
+19-    {"id": 5, "name": "Fridges", "slug": "fridges"},
+20-    {"id": 6, "name": "Freezers", "slug": "freezers"},
+--
+35-def log(message):
+36-    """Log message with timestamp"""
+37-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+38-    print(f"[{timestamp}] {message}")
+39-
+40:def scrape_category(category):
+41:    """Scrape a single category"""
+42:    slug = category['slug']
+43:    name = category['name']
+44-    output_file = f"output/{slug}_full.json"
+45-
+46:    # Check if already scraped
+47-    if Path(output_file).exists():
+48-        # Check if file has content
+49-        with open(output_file, 'r') as f:
+50-            data = json.load(f)
+51-            if data.get('products') and len(data['products']) > 0:
+52:                log(f"⚠️  {name} already scraped ({len(data['products'])} products), skipping...")
+53-                return True
+54-
+55-    log(f"🔍 Scraping {name}...")
+56-
+57-    # Build command
+58-    url = f"https://www.which.co.uk/reviews/{slug}"
+59-    cmd = [
+60:        'python', 'complete_scraper.py',
+61-        '--url', url,
+62-        '--pages', 'all',
+63-        '--workers', '5',
+64-        '--output', output_file
+65-    ]
+66-
+67-    try:
+68:        # Run scraper
+69-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)  # 30 min timeout
+70-
+71-        if result.returncode == 0:
+72:            log(f"✅ Successfully scraped {name}")
+73-
+74-            # Check if metadata was generated
+75-            metadata_file = output_file.replace('.json', '.metadata.json')
+76-            if Path(metadata_file).exists():
+77-                log(f"✅ Metadata generated for {name}")
+78-            else:
+79-                log(f"⚠️  Metadata generation failed for {name}")
+80-
+81-            return True
+82-        else:
+83:            log(f"❌ Failed to scrape {name}: {result.stderr}")
+84-            return False
+85-
+86-    except subprocess.TimeoutExpired:
+87-        log(f"❌ Timeout scraping {name} (exceeded 30 minutes)")
+88-        return False
+89-    except Exception as e:
+90-        log(f"❌ Error scraping {name}: {e}")
+91-        return False
+92-
+93-def main():
+94:    """Main batch scraping function"""
+95-    log("="*60)
+96-    log("BATCH CATEGORY SCRAPER")
+97-    log("="*60)
+98-
+99-    # Track progress
+100-    successful = []
+101-    failed = []
+102-    skipped = []
+103-
+104:    # Process each category
+105:    for i, category in enumerate(CATEGORIES, 1):
+106:        log(f"\nProcessing {i}/{len(CATEGORIES)}: {category['name']}")
+107-
+108-        # Check if output exists and skip if requested
+109:        output_file = f"output/{category['slug']}_full.json"
+110-        if Path(output_file).exists():
+111-            with open(output_file, 'r') as f:
+112-                data = json.load(f)
+113-                if data.get('products') and len(data['products']) > 0:
+114:                    skipped.append(category)
+115:                    log(f"⚠️  Skipping {category['name']} (already has {len(data['products'])} products)")
+116-                    continue
+117-
+118:        success = scrape_category(category)
+119-
+120-        if success:
+121:            successful.append(category)
+122-        else:
+123:            failed.append(category)
+124-
+125:        # Add delay between scrapes to be respectful
+126-        if i < len(CATEGORIES):
+127:            log("Waiting 5 seconds before next scrape...")
+128-            time.sleep(5)
+129-
+130-    # Summary report
+131-    log("\n" + "="*60)
+132-    log("SUMMARY")
+133-    log("="*60)
+134-    log(f"Total categories: {len(CATEGORIES)}")
+135:    log(f"✅ Successfully scraped: {len(successful)}")
+136:    log(f"⚠️  Skipped (already scraped): {len(skipped)}")
+137-    log(f"❌ Failed: {len(failed)}")
+138-
+139-    if failed:
+140-        log("\nFailed categories:")
+141-        for cat in failed:

@@ -70,10 +70,32 @@ def auto_extract_unit(value: str) -> Tuple[str, Optional[str], Optional[str]]:
     return value_str, None, None
 
 
+def normalize_numeric_value(value_str: str) -> str:
+    """
+    Normalize numeric values:
+    - Convert European comma decimals to periods (6,2 → 6.2)
+    - Preserve ranges (220-240, 1–48)
+    - Remove extra spaces
+    """
+    # Handle European decimal comma ONLY if it's between digits
+    # Pattern: digit + comma + digits (e.g., "6,2")
+    value_str = re.sub(r'(\d),(\d)', r'\1.\2', value_str)
+
+    # Normalize en-dash and em-dash to hyphen in ranges
+    value_str = value_str.replace('–', '-').replace('—', '-')
+
+    return value_str.strip()
+
+
 def extract_unit_from_value(value: str, units: List[str], new_key: str = None) -> Tuple[str, str]:
     """
     Extract numeric value and unit from string.
     Automatically converts units when needed (e.g., mm -> cm).
+    Handles:
+    - European decimals (6,2 → 6.2)
+    - Ranges (220-240V, 1–48 hr)
+    - Complex patterns (2s for seconds, etc.)
+
     Returns: (numeric_value, detected_unit)
     """
     value_str = str(value).strip()
@@ -83,6 +105,7 @@ def extract_unit_from_value(value: str, units: List[str], new_key: str = None) -
     if re.search(mm_pattern, value_str, re.IGNORECASE):
         # Extract numeric value
         numeric = re.sub(mm_pattern, '', value_str, flags=re.IGNORECASE).strip()
+        numeric = normalize_numeric_value(numeric)
 
         # Check if target key expects cm
         if new_key and new_key.endswith('_cm'):
@@ -102,16 +125,30 @@ def extract_unit_from_value(value: str, units: List[str], new_key: str = None) -
             # Target expects mm, return as-is
             return numeric, "mm"
 
+    # Sort units by length (longest first) to match specific forms before generic ones
+    # This prevents "L" matching before "Litres", which would leave "itres"
+    sorted_units = sorted(units, key=len, reverse=True)
+
     # Try expected units from the unification map
-    for unit in units:
-        # Try to find and remove the unit
-        pattern = rf'\s*{re.escape(unit)}\s*'
+    for unit in sorted_units:
+        # Try to find and remove the unit (case-insensitive, handles trailing/embedded units)
+        pattern = rf'\s*{re.escape(unit)}\s*$'
         if re.search(pattern, value_str, re.IGNORECASE):
             # Remove the unit and extract number
             numeric = re.sub(pattern, '', value_str, flags=re.IGNORECASE).strip()
+            numeric = normalize_numeric_value(numeric)
             return numeric, unit
 
-    return value_str, ""
+    # If no exact match, try non-anchored pattern (unit anywhere in string)
+    for unit in sorted_units:
+        pattern = rf'\s*{re.escape(unit)}\s*'
+        if re.search(pattern, value_str, re.IGNORECASE):
+            numeric = re.sub(pattern, '', value_str, flags=re.IGNORECASE).strip()
+            numeric = normalize_numeric_value(numeric)
+            return numeric, unit
+
+    # No unit found, just normalize the value
+    return normalize_numeric_value(value_str), ""
 
 
 def apply_merges(specs: Dict, merges: Dict) -> Dict:
@@ -269,11 +306,18 @@ def standardize_products(input_file: str, map_file: str, output_file: str) -> Di
     }
 
 
-def main():
-    """Main entry point for transformation."""
-    input_file = DEFAULT_INPUT_FILE
-    map_file = DEFAULT_UNIFICATION_MAP_FILE
-    output_file = DEFAULT_OUTPUT_FILE
+def main(input_file: str = None, map_file: str = None, output_file: str = None):
+    """
+    Main entry point for transformation.
+
+    Args:
+        input_file: Path to input products JSON (default: DEFAULT_INPUT_FILE)
+        map_file: Path to unification map JSON (default: DEFAULT_UNIFICATION_MAP_FILE)
+        output_file: Path to output standardized JSON (default: DEFAULT_OUTPUT_FILE)
+    """
+    input_file = input_file or DEFAULT_INPUT_FILE
+    map_file = map_file or DEFAULT_UNIFICATION_MAP_FILE
+    output_file = output_file or DEFAULT_OUTPUT_FILE
 
     summary = standardize_products(input_file, map_file, output_file)
 

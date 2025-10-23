@@ -10,23 +10,20 @@ This is a comprehensive web scraping system for Which.com product reviews with A
 
 ### Running Scrapers
 ```bash
-# Basic scraping with default settings (washing machines, 1 page)
-python complete_scraper.py
+# Basic scraping (default: discovery + specs + standardization + metadata)
+python src/scrapers/which/complete_scraper.py --pages 2
 
-# Scrape all pages from a category with specifications
-python complete_scraper.py --url "https://www.which.co.uk/reviews/air-fryers" --pages all --workers 5
+# Full enrichment pipeline with database insertion
+python src/scrapers/which/complete_scraper.py --pages all --enrich-retailers --enrich-reviews --save-to-db
 
-# Quick product discovery without specifications
-python complete_scraper.py --pages 3 --skip-specs
+# Maximum enrichment (including AI)
+python src/scrapers/which/complete_scraper.py --pages all --enrich-retailers --enrich-reviews --enrich-ai --save-to-db
 
-# Scrape with specifications but skip retailer prices
-python complete_scraper.py --pages 2 --skip-retailers
+# Quick product discovery only (no specs)
+python src/scrapers/which/complete_scraper.py --pages 3 --skip-specs
 
-# Full pipeline with AO.com review enrichment
-python full_pipeline.py --pages all --workers 5 --review-workers 3
-
-# Test image extraction functionality
-python test_complete_scraper_images.py
+# Raw data only (skip processing phases)
+python src/scrapers/which/complete_scraper.py --pages 2 --no-standardization --no-metadata
 ```
 
 ### Database Operations
@@ -55,26 +52,31 @@ playwright install chromium
 
 ## Architecture
 
-### Core Scraping Pipeline
+### 10-Phase Scraping Pipeline
 
-1. **Product Discovery Phase** (`complete_scraper.py: scrape_products_phase`)
-   - Scrapes product listings from Which.com category pages
-   - Detects total pages automatically
-   - Extracts: name, price, Which.com URL, retailer links
+The scraper operates as a sequential 10-phase pipeline:
 
-2. **Specification Extraction Phase** (`complete_scraper.py: enrich_specs_phase`)
-   - Parallel worker architecture for concurrent processing
-   - Navigates to individual product pages
-   - Extracts detailed specifications and features tables
-   - Extracts retailer prices from "Where to buy" section (enabled by default)
-   - Optional image extraction capability
-   - Uses shared browser context for efficiency
+**Data Collection (Phases 1-7):**
+1. **Product Discovery** - Which.com listings
+2. **Base Spec Extraction** - Which.com specs and features
+3. **Retailer Link Discovery** - DuckDuckGo search for retailer URLs
+4. **Retailer Spec Enrichment** - Additional specs from AO, Currys, etc. (opt-in)
+5. **PDF Spec Enrichment** - Manufacturer PDFs as fallback (automatic with Phase 4)
+6. **Review Enrichment** - Customer reviews from AO/Boots/Amazon (opt-in)
+7. **AI Spec Enrichment** - Gemini AI fallback for missing specs (opt-in)
 
-3. **Review Enrichment Phase** (`review_scrapers/ao_review_enricher.py`)
-   - Searches AO.com for matching products
-   - Extracts review ratings and counts
-   - Calculates TOD score (Bayesian weighted rating)
-   - Parallel processing with configurable workers
+**Data Processing & Persistence (Phases 8-10):**
+8. **Data Standardization** - Clean and unify field names/units (runs by default)
+9. **Metadata Generation** - Extract unique values for filtering (runs by default)
+10. **Database Insertion** - Persist to Supabase (opt-in)
+
+### Key Architecture Principles
+
+- **Parallel worker architecture** for concurrent processing in collection phases
+- **Single browser instance** shared across entire pipeline for efficiency
+- **Plugin-style retailer scrapers** with priority-based selection
+- **Intelligent fallback chains** (Retailer → PDF → AI)
+- **Graceful degradation** - each phase optional, pipeline continues on failures
 
 ### Key Components
 
