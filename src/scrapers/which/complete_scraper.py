@@ -9,6 +9,7 @@ import argparse
 import json
 import os
 import io
+import sys
 import aiohttp
 import re
 import unicodedata
@@ -17,6 +18,11 @@ from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
+
+# Add the project root to sys.path for src imports
+script_dir = Path(__file__).resolve().parent
+project_root = script_dir.parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 # Import retailer enrichment orchestrator
 from src.scrapers.retailers.orchestrator import RetailerEnrichmentOrchestrator
@@ -1383,13 +1389,9 @@ async def main(url: str, pages, workers: int, skip_specs: bool, output_file: str
 
             print(f"Generating metadata from: {input_for_metadata}")
 
-            # Load the data
-            with open(input_for_metadata, encoding='utf-8') as f:
-                metadata_input = json.load(f)
-
-            # Generate metadata
+            # Generate metadata (pass file path, not products list)
             generator = ProductMetadataGenerator()
-            metadata = generator.generate_metadata(metadata_input.get('products', []))
+            metadata = generator.generate_metadata(str(input_for_metadata))
 
             # Save metadata
             metadata_path = input_for_metadata.parent / f"{input_for_metadata.stem}.metadata.json"

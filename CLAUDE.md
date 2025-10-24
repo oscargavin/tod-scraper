@@ -41,6 +41,26 @@ python fix_prices.py
 python transfer_images.py
 ```
 
+### Standardization Pipeline
+```bash
+# Run full standardization pipeline
+python -m src.standardization.cli --input output/complete_products.json
+
+# Run on specific category
+python -m src.standardization.cli --input output/air-fryers_full.json
+
+# Skip value normalization (faster)
+python -m src.standardization.cli --no-value-normalization
+
+# Individual steps
+python -m src.standardization.analyzer
+python -m src.standardization.generator
+python -m src.standardization.transformer
+python -m src.standardization.value_normalizer
+python -m src.standardization.categorizer
+python -m src.standardization.validator
+```
+
 ### Environment Setup
 ```bash
 # Install dependencies
@@ -48,6 +68,9 @@ pip install -r requirements.txt
 
 # Install Playwright browsers
 playwright install chromium
+
+# Set up Gemini API for standardization (required)
+echo "GEMINI_API_KEY=your_api_key" >> .env
 ```
 
 ## Architecture
@@ -66,7 +89,13 @@ The scraper operates as a sequential 10-phase pipeline:
 7. **AI Spec Enrichment** - Gemini AI fallback for missing specs (opt-in)
 
 **Data Processing & Persistence (Phases 8-10):**
-8. **Data Standardization** - Clean and unify field names/units (runs by default)
+8. **Data Standardization** - AI-powered 6-step pipeline to clean and unify field names/units (runs by default)
+   - Analyzer: Collects all spec/feature keys with pattern detection
+   - Generator: Gemini AI creates unification rules
+   - Transformer: Applies standardization + unit extraction
+   - Value Normalizer: Gemini AI normalizes field values (language, case, formatting)
+   - Categorizer: Separates boolean features from quantitative specs
+   - Validator: Ensures data quality
 9. **Metadata Generation** - Extract unique values for filtering (runs by default)
 10. **Database Insertion** - Persist to Supabase (opt-in)
 
@@ -86,28 +115,39 @@ The scraper operates as a sequential 10-phase pipeline:
 - **Database Integration**: Supabase client for persistent storage
 
 ### Output Structure
+
+**Standardized Output** (`complete_products.standardized.json`):
 ```json
 {
   "products": [
     {
-      "name": "Product Name",
-      "price": "£299",
+      "name": "Ninja Crispi FN101UKGY",
+      "price": 129.99,
       "whichUrl": "https://www.which.co.uk/reviews/...",
-      "specs": {},
-      "features": {},
+      "specs": {
+        "depth_cm": "25",
+        "width_cm": "30",
+        "height_cm": "30",
+        "weight_kg": "4.242",
+        "capacity_l": "3.8",
+        "power_w": "1700",
+        "cable_length_cm": "91",
+        "measured_maximum_cooking_capacity_kg": "0.967",
+        "colour": "Cyber Space Blue",
+        "material": "Glass"
+      },
+      "features": {
+        "air_fry_function": "Yes",
+        "dishwasher_safe_parts": "Yes",
+        "keep_warm_function": "Yes",
+        "smart_controls": "No"
+      },
       "reviews": {
         "rating": "4.5/5",
         "count": 150,
         "todScore": 89.5
       },
-      "images": {},
-      "retailerLinks": [
-        {
-          "name": "Currys",
-          "price": "£429",
-          "url": "https://..."
-        }
-      ]
+      "retailerLinks": [...]
     }
   ],
   "total": 79,
@@ -116,11 +156,18 @@ The scraper operates as a sequential 10-phase pipeline:
 }
 ```
 
+**Key Features:**
+- ✅ **Unit suffixes in keys** (`_cm`, `_kg`, `_l`, `_w`) - values are pure numbers
+- ✅ **No duplicates** - `capacity_l` (not both `capacity` and `capacity_l`)
+- ✅ **Type separation** - specs = quantitative/categorical, features = boolean only
+- ✅ **Normalized values** - "Yes"/"No" standardized, English language, consistent casing
+
 ## Environment Variables
 
 Required in `.env` file:
 - `SUPABASE_URL` - Supabase project URL
 - `SUPABASE_KEY` - Supabase service key
+- `GEMINI_API_KEY` - Google Gemini API key (required for standardization pipeline)
 
 ## Performance Considerations
 

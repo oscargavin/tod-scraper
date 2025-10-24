@@ -31,11 +31,12 @@ pip install -r requirements.txt
 playwright install chromium
 ```
 
-4. **(Optional) Set up Supabase** for image storage:
+4. **Set up environment variables**:
 ```bash
 # Create .env file
 echo "SUPABASE_URL=your_supabase_url" >> .env
 echo "SUPABASE_KEY=your_supabase_key" >> .env
+echo "GEMINI_API_KEY=your_gemini_api_key" >> .env  # Required for standardization
 ```
 
 ## Usage
@@ -172,48 +173,68 @@ The scraper works with any Which.com reviews URL:
 
 ## Output Format
 
-The scraper generates a JSON file with the following structure:
+The scraper generates two JSON files:
+
+### Raw Output (`complete_products.json`)
+Contains unprocessed data from all sources with mixed field names and formats.
+
+### Standardized Output (`complete_products.standardized.json`)
+AI-cleaned data with unified field names, extracted units, and proper categorization:
 
 ```json
 {
   "products": [
     {
-      "name": "Siemens IQ-500 i-Dos WG46H2A9GB",
-      "price": 599.0,
+      "name": "Ninja Crispi FN101UKGY",
+      "price": 129.99,
       "whichUrl": "https://www.which.co.uk/reviews/...",
+      "specs": {
+        "depth_cm": "25",
+        "width_cm": "30",
+        "height_cm": "30",
+        "weight_kg": "4.242",
+        "capacity_l": "3.8",
+        "power_w": "1700",
+        "cable_length_cm": "91",
+        "measured_maximum_cooking_capacity_kg": "0.967",
+        "colour": "Cyber Space Blue",
+        "material": "Glass",
+        "type": "Oven",
+        "annual_running_cost_gbp": "21.13"
+      },
+      "features": {
+        "air_fry_function": "Yes",
+        "dishwasher_safe_parts": "Yes",
+        "keep_warm_function": "Yes",
+        "roast_function": "Yes",
+        "smart_controls": "No"
+      },
       "retailerLinks": [
         {
           "name": "AO",
-          "price": "£599",
-          "url": "https://ao.com/product/..."
+          "price": "£130",
+          "url": "https://..."
         }
       ],
-      "specs": {
-        "type": "Freestanding",
-        "height": "84.5cm",
-        "wash_load": "9 Kg",
-        "max_spin_speed": "1600 RPM",
-        "energy_rating": "A",
-        ...
-      },
-      "features": {
-        "quick_wash": "Yes",
-        "steam_function": "No",
-        "smart_control": "Yes",
-        ...
-      },
-      "retailerEnrichmentUrl": "https://ao.com/product/...",
-      "retailerEnrichmentSource": "AO"
+      "reviews": {
+        "rating": "4.5/5",
+        "count": 150,
+        "todScore": 89.5
+      }
     }
   ],
-  "total": 20,
-  "url": "https://www.which.co.uk/reviews/washing-machines",
-  "successful_enriched": 20,
-  "failed_enriched": 0,
-  "total_specs_extracted": 927,
-  "total_features_extracted": 200
+  "total": 79,
+  "successful_enriched": 79,
+  "failed_enriched": 0
 }
 ```
+
+**Standardization Benefits:**
+- ✅ **Unit suffixes in keys** (`_cm`, `_kg`, `_l`, `_w`) - values are pure numbers
+- ✅ **No duplicates** - Single `capacity_l` field (no `capacity` AND `capacity_l`)
+- ✅ **Type separation** - Specs = quantitative/categorical, Features = boolean only
+- ✅ **Normalized values** - "Yes"/"No" standardized, English language, consistent casing
+- ✅ **AI-powered cleaning** - Gemini handles edge cases and inconsistencies automatically
 
 ## Retailer Enrichment Architecture
 
@@ -368,10 +389,14 @@ The scraper operates in 10 sequential phases:
 ### Data Processing & Persistence (Phases 8-10)
 
 **Phase 8: Data Standardization** (runs by default)
-- Cleans and unifies field names across sources
-- Converts units to standard formats
-- Removes duplicate/redundant fields
-- Generates `.standardized.json` output
+- AI-powered 6-step pipeline using Gemini 2.5 Flash
+- Analyzer: Collects all spec/feature keys with duplicate detection
+- Generator: AI creates intelligent unification rules
+- Transformer: Applies standardization + dynamic unit extraction
+- Value Normalizer: AI normalizes field values (language, case, formatting)
+- Categorizer: Separates boolean features from quantitative specs
+- Validator: Ensures data quality
+- Generates `.standardized.json` output with clean, deduplicated data
 
 **Phase 9: Metadata Generation** (runs by default)
 - Extracts all unique values for each field
@@ -398,6 +423,16 @@ tod-scraper/
 │   │       ├── orchestrator.py       # Retailer selection & coordination
 │   │       ├── ao_scraper.py         # AO.com scraper
 │   │       └── appliance_centre_scraper.py  # Appliance Centre scraper
+│   │
+│   ├── standardization/           # AI-powered data standardization
+│   │   ├── cli.py                    # Main pipeline CLI
+│   │   ├── analyzer.py               # Key analysis & pattern detection
+│   │   ├── generator.py              # Gemini AI unification map generation
+│   │   ├── transformer.py            # Apply standardization & unit extraction
+│   │   ├── value_normalizer.py       # Gemini AI value normalization
+│   │   ├── categorizer.py            # Specs/features categorization
+│   │   ├── validator.py              # Data quality validation
+│   │   └── config.py                 # Unit patterns & configuration
 │   │
 │   ├── reviews/                   # Review enrichment system
 │   │   └── ao/                    # AO.com review scrapers
@@ -487,7 +522,50 @@ Improvements welcome! Key areas:
 - Review sentiment analysis integration
 - Advanced scraping strategies for dynamic content
 
+## Standardization Pipeline
+
+The scraper includes a powerful standalone standardization system that can be run independently:
+
+```bash
+# Run full standardization pipeline
+python -m src.standardization.cli --input output/complete_products.json
+
+# Run on specific category
+python -m src.standardization.cli --input output/air-fryers_full.json
+
+# Skip value normalization (faster, skips AI normalization)
+python -m src.standardization.cli --no-value-normalization
+
+# Adjust coverage threshold (default 10%)
+python -m src.standardization.cli --min-coverage-filter 15
+```
+
+### Standardization Features
+
+**6-Step AI-Powered Pipeline:**
+1. **Analyzer** - Collects all field keys, detects duplicate patterns
+2. **Generator** - Gemini AI creates intelligent unification rules
+3. **Transformer** - Applies standardization + dynamic unit extraction
+4. **Value Normalizer** - Gemini AI normalizes values (optional)
+5. **Categorizer** - Separates boolean features from specs
+6. **Validator** - Ensures data quality
+
+**What it fixes:**
+- Duplicate fields with different names (`capacity` vs `capacity_l` → `capacity_l`)
+- Units in values (`"25cm"` → key: `depth_cm`, value: `"25"`)
+- Language mixing (`"Ja"` → `"Yes"`, `"Nee"` → `"No"`)
+- Case inconsistencies (`"black"` → `"Black"`)
+- Field misclassification (boolean functions moved from specs to features)
+
 ## Recent Updates
+
+### January 2025 - AI-Powered Standardization System
+- Implemented 6-step standardization pipeline with Gemini 2.5 Flash
+- Dynamic unit extraction with 26 unit patterns (cm, kg, l, w, etc.)
+- AI-powered value normalization (language, case, formatting)
+- Automatic specs/features categorization (boolean → features, numeric → specs)
+- Intelligent duplicate detection and merging
+- Unit-aware field deduplication prevents incorrect merges
 
 ### December 2024 - Project Reorganization
 - Restructured codebase into logical `src/` hierarchy

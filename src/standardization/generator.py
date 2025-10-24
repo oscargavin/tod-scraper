@@ -12,6 +12,78 @@ import google.generativeai as genai
 from .config import DEFAULT_KEY_ANALYSIS_FILE, DEFAULT_UNIFICATION_MAP_FILE
 
 
+def format_patterns_for_prompt(patterns: Dict, total_products: int) -> str:
+    """Format detected patterns into readable prompt section."""
+    lines = []
+
+    lines.append("\nDETECTED PATTERNS (pre-analyzed):\n")
+
+    # Format suffix clusters
+    if patterns['suffix_clusters']:
+        lines.append("SUFFIX CLUSTERS:")
+        for cluster in patterns['suffix_clusters'][:15]:  # Show top 15
+            base = cluster['base']
+            variants = cluster['variants']
+            canonical = cluster['suggested_canonical']
+            ratio = cluster['coverage_ratio']
+
+            # Format variants list
+            variants_str = " ← ".join([
+                f"{v['key']} ({v['count']})" for v in variants
+            ])
+            lines.append(f"  • {variants_str}")
+            lines.append(f"    Coverage ratio: {ratio}, Suggested canonical: {canonical}")
+
+        if len(patterns['suffix_clusters']) > 15:
+            lines.append(f"  ... and {len(patterns['suffix_clusters']) - 15} more clusters")
+        lines.append("")
+
+    # Format unit inconsistencies
+    if patterns.get('unit_inconsistencies'):
+        lines.append("UNIT INCONSISTENCIES:")
+        for inconsistency in patterns['unit_inconsistencies']:
+            variants = inconsistency['variants']
+            canonical = inconsistency['suggested_canonical']
+            coverage = inconsistency['coverage']
+            reason = inconsistency['reason']
+
+            variants_str = " ← ".join([
+                f"{v} ({c})" for v, c in zip(variants, coverage)
+            ])
+            lines.append(f"  • {variants_str}")
+            lines.append(f"    Reason: {reason}, Suggested canonical: {canonical}")
+
+        lines.append("")
+
+    # Format redundant pairs
+    if patterns.get('redundant_pairs'):
+        lines.append("REDUNDANT PAIRS (_value suffix):")
+        for pair in patterns['redundant_pairs']:
+            key1, key2 = pair['key1'], pair['key2']
+            cov1, cov2 = pair['coverage']
+            canonical = pair['suggested_canonical']
+            lines.append(f"  • {key1} ({cov1}) ↔ {key2} ({cov2})")
+            lines.append(f"    Suggested canonical: {canonical}")
+
+        lines.append("")
+
+    # Format similar pairs
+    if patterns['similar_pairs']:
+        lines.append("SIMILAR PAIRS (high string similarity):")
+        for pair in patterns['similar_pairs'][:10]:  # Show top 10
+            key1, key2 = pair['key1'], pair['key2']
+            sim = pair['similarity']
+            cov1, cov2 = pair['coverage']
+            lines.append(f"  • {key1} ({cov1}) ↔ {key2} ({cov2})")
+            lines.append(f"    Similarity: {int(sim*100)}%")
+
+        if len(patterns['similar_pairs']) > 10:
+            lines.append(f"  ... and {len(patterns['similar_pairs']) - 10} more pairs")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
 def create_analysis_prompt(analysis: Dict, min_coverage_percent: int = 10) -> str:
     """
     Create prompt for Gemini to analyze keys and generate unification map.
@@ -20,6 +92,8 @@ def create_analysis_prompt(analysis: Dict, min_coverage_percent: int = 10) -> st
         analysis: Key analysis dictionary with specs/features
         min_coverage_percent: Minimum coverage % to include keys (default: 10%)
     """
+    from .analyzer import detect_duplicate_patterns
+
     total_products = analysis['total_products']
     min_count = max(2, int(total_products * min_coverage_percent / 100))  # At least 2 products
 
@@ -62,7 +136,25 @@ def create_analysis_prompt(analysis: Dict, min_coverage_percent: int = 10) -> st
     print(f"Filtered out {specs_filtered} low-coverage spec keys (<{min_coverage_percent}% coverage)")
     print(f"Filtered out {features_filtered} low-coverage feature keys (<{min_coverage_percent}% coverage)")
 
-    prompt = f"""You are analyzing product specification data from multiple sources. The data comes from Which.com (authoritative source, appears first) and various retailer sites (supplementary data).
+    # Detect duplicate patterns
+    print("Detecting duplicate patterns...")
+    patterns = detect_duplicate_patterns(analysis)
+    print(f"Found {len(patterns['suffix_clusters'])} suffix clusters, "
+          f"{len(patterns.get('unit_inconsistencies', []))} unit inconsistencies, "
+          f"{len(patterns.get('redundant_pairs', []))} redundant pairs, "
+          f"and {len(patterns['similar_pairs'])} similar pairs")
+
+    # Format patterns section for prompt
+    patterns_section = format_patterns_for_prompt(patterns, total_products)
+
+    prompt = f"""ROLE: You are a data standardization expert analyzing product specifications.
+
+CONTEXT:
+- Data sources: Which.com (authoritative) + retailer sites (supplementary)
+- Goal: Reduce field redundancy while preserving semantic distinctions
+- Total products: {total_products}
+
+INPUT DATA:
 
 **SPECS ({len(filtered_specs)} unique keys, ≥{min_coverage_percent}% coverage):**
 {chr(10).join(specs_summary)}
@@ -70,8 +162,93 @@ def create_analysis_prompt(analysis: Dict, min_coverage_percent: int = 10) -> st
 **FEATURES ({len(filtered_features)} unique keys, ≥{min_coverage_percent}% coverage):**
 {chr(10).join(features_summary)}
 
-Your task: Generate a unification map as valid JSON with this exact structure:
+{patterns_section}
 
+DECISION RULES (in priority order):
+
+1. MERGE when:
+   ✓ Variants differ only by _function/_feature/_dial/_control/_mode/_value suffixes AND mean the same thing
+   ✓ Coverage ratio >3:1 AND values are identical (e.g., all "Yes")
+   ✓ Semantic equivalence (e.g., "adjustable_temperature" = "adjustable_temperature_control")
+   ✓ Unit suffix variants: "wattage_w" vs "wattage_watt" vs "wattage_watts" → merge to shortest standard suffix (_w)
+   ✓ Redundant _value suffix: "capacity" vs "capacity_value" → merge to higher coverage form
+
+2. KEEP SEPARATE when:
+   ✗ Different semantics (e.g., "bake" vs "bake_temperature_celsius")
+   ✗ Different value types (e.g., "timer" boolean vs "timer_duration_mins" numeric)
+   ✗ Coverage is balanced (40 vs 35 products = both are meaningful)
+   ✗ Different specificity: "basket_capacity_l" vs "total_capacity_l" (different meanings)
+
+3. CRITICAL - NEVER MERGE KEYS WITH UNITS TO KEYS WITHOUT UNITS:
+   ✗ NEVER: "depth_cm" → "depth" (depth_cm has unit in key, depth has unit in value)
+   ✗ NEVER: "weight_kg" → "weight" (weight_kg has unit in key, weight has unit in value)
+   ✗ NEVER: "capacity_l" → "capacity" (capacity_l has unit in key, capacity has unit in value)
+
+   WHY: Keys with unit suffixes (_cm, _kg, _l) have already-extracted values (pure numbers).
+        Keys without suffixes still have units in their values ("25cm", "4.2kg").
+        These are DIFFERENT and will be handled by unit extraction phase.
+
+   ✓ DO MERGE: "depth_cm" ↔ "depth_centimeters" (both have extracted units, just different suffix forms)
+
+4. CANONICAL SELECTION:
+   • Prefer most specific name (e.g., "timer_function" > "timer" IF it clarifies meaning)
+   • If specificity equal, prefer highest coverage
+
+5. UNIT EXTRACTIONS:
+   - Keys whose values contain units (like "84.3cm", "1400 RPM", "6,2 liter")
+   - List ALL unit variations you see in the all_values (e.g., ["Litres", "litres", "liter", "L"])
+   - CRITICAL: Put longer/more specific forms FIRST (e.g., ["Litres", "litres", "liter", "L"], NOT ["L", "Litres"])
+   - Handle European decimals: "6,2" and "6.2" both mean 6.2
+   - Handle ranges: "220-240V" → extract 220-240, unit is V
+
+   UNIT SUFFIX NAMING RULES:
+   - Use shortest standard unit suffix in new_key:
+     • Litres/litres/L → use "_l" (e.g., capacity → capacity_l)
+     • Watts/W → use "_w" (e.g., power → power_w)
+     • Kilograms/kg → use "_kg" (e.g., weight → weight_kg)
+     • Centimeters/cm → use "_cm" (e.g., depth → depth_cm)
+     • Grams/g → use "_g"
+     • Minutes/min → use "_min"
+     • Hours/hr → use "_hr"
+   - NEVER use generic suffixes like "_value" unless the unit is truly ambiguous
+   - Examples:
+     ✓ "capacity": "3.8 litres" → new_key: "capacity_l" (NOT "capacity_value")
+     ✓ "power": "1700 W" → new_key: "power_w" (NOT "power_value")
+     ✓ "weight": "4.2 kg" → new_key: "weight_kg" (NOT "weight_value")
+
+6. DELETIONS:
+   - Completely redundant fields (e.g., "dimensions" when we have height/width/depth separately)
+   - Inventory/metadata not useful for purchase decisions
+
+7. CROSS_CATEGORY_REMOVALS:
+   - Keys that appear in both specs AND features - decide which category they belong to
+
+EXAMPLES:
+
+Good merge:
+  timer_function → timer (both just indicate presence of timer, 5:1 coverage ratio)
+
+Bad merge:
+  timer → timer_duration_mins (different types: boolean vs numeric)
+
+Good merge:
+  air_fry_function → air_fry (semantic equivalent, _function suffix adds no meaning)
+
+Good merge:
+  wattage_w ↔ wattage_watt ↔ wattage_watts → wattage_w (unit suffix variants, standardize to shortest)
+
+Good merge:
+  capacity / capacity_value → capacity_value (redundant _value suffix, use higher coverage)
+
+Bad merge:
+  basket_capacity_l → total_capacity_l (different meanings, keep separate)
+
+CRITICAL - BAD MERGE (unit extraction will handle this):
+  depth_cm → depth (NEVER merge - depth has "25cm", depth_cm has "25")
+  weight_kg → weight (NEVER merge - weight has "4.2kg", weight_kg has "4.2")
+  capacity_l → capacity (NEVER merge - capacity has "3.8 litres", capacity_l has "3.8")
+
+OUTPUT FORMAT:
 {{
   "merges": {{
     "alias_key": "canonical_key"
@@ -88,25 +265,6 @@ Your task: Generate a unification map as valid JSON with this exact structure:
     "features": ["key_in_features_but_belongs_in_specs"]
   }}
 }}
-
-Rules:
-1. MERGES: When multiple keys represent the same concept (e.g., "max_spin_speed" and "max_spin_speed_rpm"), map the less specific one to the more specific canonical version.
-2. DELETIONS: Delete keys that are:
-   - Completely redundant (e.g., "dimensions" when we have height/width/depth separately)
-   - Inventory/metadata not useful for purchase decisions (e.g., variations of part_number, sku, ean, product_code, item_number, catalog_number)
-   - Redundant identifiers (e.g., id, product_id, variant_id)
-   - Retailer-specific operational data (e.g., stock_status, availability, delivery_time)
-3. UNIT_EXTRACTIONS: Keys whose values contain units (like "84.3cm", "1400 RPM", "6,2 liter"). Extract units from values and add to key names.
-   - List ALL unit variations you see in the all_values (e.g., ["Litres", "litres", "liter", "L", "l"])
-   - Handle European decimals: "6,2" and "6.2" both mean 6.2
-   - Handle ranges: "220-240V" → extract 220-240, unit is V
-   - Handle complex units: "1–48 hr" → extract 1-48, unit is hr
-   - CRITICAL: Put longer/more specific forms FIRST (e.g., ["Litres", "litres", "liter", "L"], NOT ["L", "Litres"])
-4. CROSS_CATEGORY_REMOVALS: Keys that appear in both specs AND features - decide which category they belong to and remove from the other.
-5. Units should ONLY be in key names, NEVER in values. Values should be pure numbers or strings.
-6. Use snake_case for all keys.
-7. When you see all_values for a key, use THOSE values (not samples) to determine ALL unit variations.
-8. Do NOT include reasoning or explanations, only the JSON map.
 
 Return ONLY valid JSON, nothing else."""
 

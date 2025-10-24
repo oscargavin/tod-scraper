@@ -19,8 +19,48 @@ from .config import (
 
 
 def normalize_key(key: str) -> str:
-    """Normalize key for comparison (lowercase, no underscores/spaces)."""
-    return key.lower().replace('_', '').replace('-', '').replace(' ', '')
+    """
+    Normalize key for comparison, stripping unit suffixes.
+
+    This ensures that fields with different unit suffix variations
+    (e.g., capacity_l, capacity_litres, capacity_litre) are recognized
+    as duplicates and merged properly.
+
+    IMPORTANT: Only strips unit suffixes that were preceded by an underscore
+    to avoid false positives (e.g., "depth" should stay "depth", not become "dept").
+    """
+    # Common unit suffix variations to strip (longest first for proper matching)
+    UNIT_SUFFIXES = [
+        'centimeters', 'centimeter', 'millimeters', 'millimeter', 'kilograms', 'kilogram',
+        'litres', 'litre', 'liter', 'meters', 'meter', 'minutes', 'minute', 'seconds', 'second',
+        'degrees', 'degree', 'celsius', 'watts', 'watt', 'hours', 'hour', 'grams', 'gram',
+        'percent', 'mins', 'secs', 'hrs', 'deg', 'pct', 'amps', 'amp',
+        'cm', 'mm', 'kg', 'rpm', 'kwh', 'db', 'hz', 'gbp', 'min', 'sec', 'hr',
+        'l', 'g', 'm', 'w', 'h', 's', 'a', 'c', 'v'
+    ]
+
+    # Normalize to lowercase
+    key_lower = key.lower()
+
+    # Check for unit suffixes BEFORE removing underscores (to detect _cm, _kg, etc.)
+    for suffix in UNIT_SUFFIXES:
+        # Only strip if suffix is preceded by underscore, dash, or space
+        for separator in ['_', '-', ' ']:
+            pattern = separator + suffix
+            if key_lower.endswith(pattern):
+                # Strip the unit suffix WITH its separator
+                key_lower = key_lower[:-len(pattern)]
+                break  # Found a match, move to normalization
+        else:
+            # Continue to next suffix if no match found
+            continue
+        # If we found a match, we've already stripped it, so break outer loop
+        break
+
+    # Now remove all remaining separators
+    normalized = key_lower.replace('_', '').replace('-', '').replace(' ', '')
+
+    return normalized
 
 
 def auto_extract_unit(value: str) -> Tuple[str, Optional[str], Optional[str]]:
@@ -186,6 +226,7 @@ def apply_unit_extractions(specs: Dict, unit_extractions: Dict) -> Dict:
     1. First check if key is in unification_map (explicit rules)
     2. If not, try auto_extract_unit() for dynamic detection
     3. If unit detected dynamically, update key name and extract value
+    4. Avoid double-suffixing (e.g., measured_maximum_cooking_capacity_kg shouldn't become _kg_kg)
     """
     result = {}
 
@@ -204,8 +245,15 @@ def apply_unit_extractions(specs: Dict, unit_extractions: Dict) -> Dict:
             numeric_value, detected_unit, suggested_suffix = auto_extract_unit(value)
 
             if detected_unit is not None:
-                # Unit detected! Create new key with suffix
-                new_key = key + suggested_suffix
+                # Unit detected! Check if key already has this suffix
+                if key.endswith(suggested_suffix):
+                    # Key already has the unit suffix (e.g., "capacity_l" or "weight_kg")
+                    # Just extract the value, don't modify the key name
+                    new_key = key
+                else:
+                    # Key doesn't have suffix yet, add it
+                    new_key = key + suggested_suffix
+
                 result[new_key] = numeric_value
             else:
                 # No unit detected, keep as-is
@@ -260,9 +308,72 @@ def standardize_product(product: Dict, unification_map: Dict) -> Dict:
     return standardized
 
 
-def standardize_products(input_file: str, map_file: str, output_file: str) -> Dict:
+def filter_low_coverage_fields(products: List[Dict], min_coverage_percent: float = 10.0) -> Tuple[List[Dict], Dict]:
+    """
+    Remove specs/features that appear in less than min_coverage_percent of products.
+
+    Args:
+        products: List of standardized products
+        min_coverage_percent: Minimum percentage of products a field must appear in (default: 10%)
+
+    Returns:
+        (filtered_products, stats_dict)
+    """
+    from collections import Counter
+
+    total_products = len(products)
+    min_count = max(1, int(total_products * min_coverage_percent / 100))
+
+    # Count occurrences of each spec/feature
+    spec_counts = Counter()
+    feature_counts = Counter()
+
+    for product in products:
+        spec_counts.update(product.get('specs', {}).keys())
+        feature_counts.update(product.get('features', {}).keys())
+
+    # Determine which fields to keep
+    specs_to_keep = {key for key, count in spec_counts.items() if count >= min_count}
+    features_to_keep = {key for key, count in feature_counts.items() if count >= min_count}
+
+    # Filter products
+    filtered_products = []
+    for product in products:
+        filtered = copy.deepcopy(product)
+
+        # Filter specs
+        if 'specs' in filtered:
+            filtered['specs'] = {k: v for k, v in filtered['specs'].items() if k in specs_to_keep}
+
+        # Filter features
+        if 'features' in filtered:
+            filtered['features'] = {k: v for k, v in filtered['features'].items() if k in features_to_keep}
+
+        filtered_products.append(filtered)
+
+    # Calculate stats
+    specs_removed = len(spec_counts) - len(specs_to_keep)
+    features_removed = len(feature_counts) - len(features_to_keep)
+
+    return filtered_products, {
+        'specs_kept': len(specs_to_keep),
+        'specs_removed': specs_removed,
+        'features_kept': len(features_to_keep),
+        'features_removed': features_removed,
+        'min_count': min_count,
+        'min_coverage_percent': min_coverage_percent
+    }
+
+
+def standardize_products(input_file: str, map_file: str, output_file: str, min_coverage_percent: float = 0.0) -> Dict:
     """
     Apply standardization to all products.
+
+    Args:
+        input_file: Path to input products JSON
+        map_file: Path to unification map JSON
+        output_file: Path to output standardized JSON
+        min_coverage_percent: Minimum coverage % to keep fields (0 = keep all)
 
     Returns:
         Dictionary with summary statistics.
@@ -287,6 +398,17 @@ def standardize_products(input_file: str, map_file: str, output_file: str) -> Di
         if i % 10 == 0:
             print(f"  Processed {i}/{len(data['products'])} products")
 
+    # Filter low-coverage fields if threshold specified
+    coverage_stats = None
+    if min_coverage_percent > 0:
+        print(f"\nFiltering fields with <{min_coverage_percent}% coverage...")
+        standardized_products, coverage_stats = filter_low_coverage_fields(
+            standardized_products,
+            min_coverage_percent
+        )
+        print(f"  Kept {coverage_stats['specs_kept']} specs, removed {coverage_stats['specs_removed']}")
+        print(f"  Kept {coverage_stats['features_kept']} features, removed {coverage_stats['features_removed']}")
+
     # Create output with same structure as input
     output_data = copy.deepcopy(data)
     output_data['products'] = standardized_products
@@ -298,12 +420,17 @@ def standardize_products(input_file: str, map_file: str, output_file: str) -> Di
     print(f"\nStandardized data saved to {output_file}")
 
     # Return summary
-    return {
+    summary = {
         'total_products': len(standardized_products),
         'merges_applied': len(unification_map.get('merges', {})),
         'deletions_applied': len(unification_map.get('deletions', [])),
         'unit_extractions': len(unification_map.get('unit_extractions', {})),
     }
+
+    if coverage_stats:
+        summary['coverage_filtering'] = coverage_stats
+
+    return summary
 
 
 def main(input_file: str = None, map_file: str = None, output_file: str = None):

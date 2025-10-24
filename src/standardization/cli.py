@@ -5,11 +5,12 @@ Python replacement for run_full_pipeline.sh with additional features.
 """
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
 from .config import DEFAULT_INPUT_FILE, get_pipeline_paths
-from . import analyzer, generator, transformer, validator
+from . import analyzer, generator, transformer, validator, value_normalizer, categorizer
 
 
 def check_input_file(input_file: str) -> bool:
@@ -21,7 +22,9 @@ def check_input_file(input_file: str) -> bool:
     return True
 
 
-def run_pipeline(input_file: str = None, force_regenerate: bool = False, verbose: bool = False, min_coverage_percent: int = 10):
+def run_pipeline(input_file: str = None, force_regenerate: bool = False, verbose: bool = False,
+                  min_coverage_percent: int = 10, min_coverage_filter_percent: float = 10.0,
+                  normalize_values: bool = True):
     """
     Run the complete standardization pipeline.
 
@@ -29,7 +32,9 @@ def run_pipeline(input_file: str = None, force_regenerate: bool = False, verbose
         input_file: Path to input products JSON (default: DEFAULT_INPUT_FILE)
         force_regenerate: Force regeneration of unification map even if it exists
         verbose: Enable verbose output
-        min_coverage_percent: Minimum coverage % for keys to include (default: 10%)
+        min_coverage_percent: Minimum coverage % for keys during unification map generation (default: 10%)
+        min_coverage_filter_percent: Minimum coverage % to keep fields in final output (default: 10%, 0 = keep all)
+        normalize_values: Use Gemini to normalize field values (default: True)
     """
     # Use default if not specified
     input_file = input_file or DEFAULT_INPUT_FILE
@@ -65,14 +70,49 @@ def run_pipeline(input_file: str = None, force_regenerate: bool = False, verbose
 
         # Step 3: Apply standardization
         print("\n[3/4] Applying standardization...")
-        transformer.main(
+        transformer.standardize_products(
             input_file=paths['input'],
             map_file=paths['unification_map'],
-            output_file=paths['output']
+            output_file=paths['output'],
+            min_coverage_percent=min_coverage_filter_percent
         )
 
-        # Step 4: Validate
-        print("\n[4/4] Validating standardized data...")
+        # Step 3.5: Normalize values (optional)
+        if normalize_values:
+            print("\n[3.5/5] Normalizing field values with Gemini...")
+
+            # Load standardized data
+            with open(paths['output']) as f:
+                data = json.load(f)
+
+            # Normalize values
+            import copy
+            normalized_products, norm_stats = value_normalizer.normalize_all_values(
+                data['products'],
+                verbose=True
+            )
+
+            # Save normalized data
+            normalized_data = copy.deepcopy(data)
+            normalized_data['products'] = normalized_products
+
+            with open(paths['output'], 'w') as f:
+                json.dump(normalized_data, f, indent=2)
+
+            print(f"  Fields normalized: {norm_stats['fields_normalized']}")
+            print(f"  Total value changes: {norm_stats['total_value_changes']}")
+
+        # Step 4 or 4.5: Auto-categorize specs vs features
+        if normalize_values:
+            print("\n[4/6] Auto-categorizing specs vs features...")
+        else:
+            print("\n[3.5/5] Auto-categorizing specs vs features...")
+
+        categorizer.auto_categorize(paths['output'], verbose=True)
+
+        # Step 5 or 6: Validate
+        step_num = "6" if normalize_values else "5"
+        print(f"\n[{step_num}/{step_num}] Validating standardized data...")
         validator.main(input_file=paths['output'])
 
         print("\n" + "=" * 60)
@@ -115,6 +155,8 @@ Individual steps:
   python -m src.standardization.analyzer
   python -m src.standardization.generator
   python -m src.standardization.transformer
+  python -m src.standardization.value_normalizer
+  python -m src.standardization.categorizer
   python -m src.standardization.validator
         """
     )
@@ -138,12 +180,27 @@ Individual steps:
         help='Enable verbose output'
     )
 
+    parser.add_argument(
+        '--min-coverage-filter',
+        type=float,
+        default=10.0,
+        help='Minimum coverage %% to keep fields in final output (default: 10%%, 0 = keep all)'
+    )
+
+    parser.add_argument(
+        '--no-value-normalization',
+        action='store_true',
+        help='Skip value normalization step (faster but keeps inconsistencies)'
+    )
+
     args = parser.parse_args()
 
     run_pipeline(
         input_file=args.input,
         force_regenerate=args.force_regenerate,
-        verbose=args.verbose
+        verbose=args.verbose,
+        min_coverage_filter_percent=args.min_coverage_filter,
+        normalize_values=not args.no_value_normalization
     )
 
 

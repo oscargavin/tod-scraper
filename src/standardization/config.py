@@ -70,7 +70,7 @@ UNIT_PATTERNS = {
         'regex': r'\b(\d+\.?\d*)\s*kwh\b',
     },
     'watt': {
-        'suffix': '_watt',
+        'suffix': '_w',
         'regex': r'\b(\d+\.?\d*)\s*(?:watt|W)\b',
     },
     'db': {
@@ -78,15 +78,15 @@ UNIT_PATTERNS = {
         'regex': r'\b(\d+\.?\d*)\s*db\b',
     },
     'mins': {
-        'suffix': '_mins',
+        'suffix': '_min',
         'regex': r'\b(\d+\.?\d*)\s*mins?\b',
     },
     'hours': {
-        'suffix': '_hours',
+        'suffix': '_hr',
         'regex': r'\b(\d+\.?\d*)\s*(?:hours?|h)\b',
     },
     'litres': {
-        'suffix': '_litres',
+        'suffix': '_l',
         'regex': r'\b(\d+\.?\d*)\s*(?:litres?|L)\b',
     },
     'm': {
@@ -102,11 +102,11 @@ UNIT_PATTERNS = {
         'regex': r'\b(\d+\.?\d*)\s*Hz\b',
     },
     'amps': {
-        'suffix': '_amps',
+        'suffix': '_a',
         'regex': r'\b(\d+\.?\d*)\s*(?:amps?|A)\b',
     },
     'degrees': {
-        'suffix': '_degrees',
+        'suffix': '_deg',
         'regex': r'\b(\d+\.?\d*)\s*°\b',
     },
     'percent': {
